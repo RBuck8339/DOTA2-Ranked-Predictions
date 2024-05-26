@@ -71,6 +71,14 @@ teams_table_constructor = """CREATE TABLE TEAMS (
 {'player_slot': 132, 'team_number': 1, 'team_slot': 4, 'hero_id': 11, 'item_0': 141, 'item_1': 220, 'item_2': 603, 'item_3': 249, 'item_4': 0, 'item_5': 116, 'backpack_0': 0, 'backpack_1': 0, 'backpack_2': 0, 'item_neutral': 309, 'kills': 7, 'deaths': 4, 'assists': 6, 'leaver_status': 0, 'last_hits': 243, 'denies': 7, 'gold_per_min': 1328, 'xp_per_min': 2603, 'level': 30, 'net_worth': 33624, 'aghanims_scepter': 0, 'aghanims_shard': 1, 'moonshard': 1, 'hero_damage': 30476, 'tower_damage': 3824, 'hero_healing': 0, 'gold': 2324, 'gold_spent': 38705, 'ability_upgrades_arr': [5059, 5062, 5059, 5062, 5059, 5062, 5059, 5062, 5064, 6016, 5064, 5063, 5063, 5063, 6070, 5063, 5064, 6670, 1072, 999, 6875, 815, 929], 'radiant_win': True, 'start_time': 1706024135, 'duration': 1792, 'cluster': 183, 'lobby_type': 0, 'game_mode': 23, 'is_contributor': False, 'patch': 54, 'region': 8, 'isRadiant': False, 'win': 0, 'lose': 1, 'total_gold': 39662, 'total_xp': 77742, 'kills_per_min': 0.234375, 'kda': 2.6, 'abandons': 0, 'rank_tier': None, 'is_subscriber': False, 'benchmarks': {'gold_per_min': {'raw': 1328, 'pct': 0.999746963562753}, 'xp_per_min': {'raw': 2603, 'pct': 1}, 'kills_per_min': {'raw': 0.234375, 'pct': 0.49468623481781376}, 'last_hits_per_min': {'raw': 8.136160714285715, 'pct': 0.7894736842105263}, 'hero_damage_per_min': {'raw': 1020.4017857142857, 'pct': 0.8393218623481782}, 'hero_healing_per_min': {'raw': 0, 'pct': 0.8947368421052632}, 'tower_damage': {'raw': 3824, 'pct': 0.5334008097165992}}}], 
 'radiant_win': True, 'duration': 1792, 'pre_game_duration': 60, 'start_time': 1706024135, 'match_id': 7551252460, 'match_seq_num': 6358105611, 'tower_status_radiant': 1974, 'tower_status_dire': 0, 'barracks_status_radiant': 63, 'barracks_status_dire': 0, 'cluster': 183, 'first_blood_time': 121, 'lobby_type': 0, 'human_players': 10, 'leagueid': 0, 'game_mode': 23, 'flags': 0, 'engine': 1, 'radiant_score': 48, 'dire_score': 34, 'picks_bans': [{'is_pick': True, 'hero_id': 1, 'team': 0, 'order': 0}, {'is_pick': True, 'hero_id': 11, 'team': 1, 'order': 1}, {'is_pick': True, 'hero_id': 44, 'team': 1, 'order': 2}, {'is_pick': True, 'hero_id': 53, 'team': 0, 'order': 3}, {'is_pick': True, 'hero_id': 71, 'team': 1, 'order': 4}, {'is_pick': True, 'hero_id': 68, 'team': 1, 'order': 5}, {'is_pick': True, 'hero_id': 26, 'team': 0, 'order': 6}, {'is_pick': True, 'hero_id': 31, 'team': 1, 'order': 7}, {'is_pick': True, 'hero_id': 87, 'team': 0, 'order': 8}], 'od_data': {'has_api': True, 'has_gcdata': False, 'has_parsed': False}, 'metadata': None, 'patch': 54, 'region': 8}'''
 
+
+# '/publicMatches', params = {"min_rank": 70}
+'''
+{'match_id': 7756630500, 'match_seq_num': 6531334592, 'radiant_win': False, 'start_time': 1716651617, 'duration': 2585, 
+'lobby_type': 7, 'game_mode': 22, 'avg_rank_tier': 71, 'num_rank_tier': 8, 'cluster': 223, 'radiant_team': [19, 56, 97, 22, 26], 'dire_team': [28, 42, 87, 98, 88]}
+'''
+# Can plug match id into /matches/id
+
 cursor.execute(match_table_constructor)
 
 
@@ -83,7 +91,7 @@ OPEN_DOTA_URL = f'https://api.opendota.com/api/'
 #response = requests.get(OPEN_DOTA_URL + '/teams/9088071/players')  # Returns json for every single player on team X
 
 def get_match():
-    endpoint = OPEN_DOTA_URL + '/matches/7551252460'
+    endpoint = OPEN_DOTA_URL + '/matches/7756630500'
     response = requests.get(endpoint)  # Returns my information
     if response.status_code == 200:
         return response.json()
@@ -105,6 +113,8 @@ def generate_model_data():
     myfile = get_match()
     print(myfile)
 
-MyProcesser = DataPreprocesser()
+MyProcesser = DataPreprocesser(connection, cursor)
 
 DataPreprocesser.match_info(MyProcesser)
+
+#generate_model_data()
