@@ -84,6 +84,17 @@ cursor.execute(match_table_constructor)
 
 OPEN_DOTA_URL = f'https://api.opendota.com/api/'
 
+STEAM_API_KEY = "9F2A12AEAFE23E3271CC20C18145CDB2"
+
+# REST API Documentation
+# https://docs.stratz.com/index.html 
+STRATZ_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJTdWJqZWN0IjoiZTg0ZjQ3ZDMtMjViZC00MWFjLTk5MDEtODc4M2U1OTg1ZjY2IiwiU3RlYW1JZCI6IjExNTUxNTk3OTIiLCJuYmYiOjE3MTY4NzEzODEsImV4cCI6MTc0ODQwNzM4MSwiaWF0IjoxNzE2ODcxMzgxLCJpc3MiOiJodHRwczovL2FwaS5zdHJhdHouY29tIn0.V9os4YLxMhMI7f5PFZgObBJsoMrLUkmKjv2DxN4SvOg'
+
+STRATZ_GRAPHQL = 'https://api.stratz.com/graphiql/'
+headers = {
+    "Authorization": f"Bearer {STRATZ_TOKEN}",
+    "Content-Type": "application/json"
+}
 
 #response = requests.get(OPEN_DOTA_URL + '/proPlayers')  # Returns json for every single pro player
 #response = requests.get(OPEN_DOTA_URL + '/proMatches')  # Returns json for every single match
@@ -91,7 +102,7 @@ OPEN_DOTA_URL = f'https://api.opendota.com/api/'
 #response = requests.get(OPEN_DOTA_URL + '/teams/9088071/players')  # Returns json for every single player on team X
 
 def get_match():
-    endpoint = OPEN_DOTA_URL + '/matches/7756630500'
+    endpoint = OPEN_DOTA_URL + '/players/92580861/recentMatches'
     response = requests.get(endpoint)  # Returns my information
     if response.status_code == 200:
         return response.json()
@@ -111,10 +122,19 @@ def api_calls():
 
 def generate_model_data():
     myfile = get_match()
-    print(myfile)
+    print(len(myfile))
 
 MyProcesser = DataPreprocesser(connection, cursor)
 
-DataPreprocesser.match_info(MyProcesser)
+#DataPreprocesser.match_info(MyProcesser)
 
-#generate_model_data()
+''' /proMatches
+{'match_id': 7761976803, 'duration': 1985, 'start_time': 1716846191, 'radiant_team_id': 8849850, 'radiant_name': 'HELLBEAR HEROES', 'dire_team_id': 8849833, 
+'dire_name': 'VERTEX PACK', 'leagueid': 16635, 
+'league_name': 'Dota 2 Space League', 'series_id': 879062, 'series_type': 1, 'radiant_score': 24, 'dire_score': 37, 'radiant_win': False, 'version': 21}
+'''
+
+# Querying the match actually gives a lot more data
+
+
+generate_model_data()

@@ -100,10 +100,14 @@ class DataPreprocesser():
             curr_lane = player['player_slot'] % 128
 
             # Calculate Players Win/Loss Ratio
-            wl_dict = self.request_data(OPEN_DOTA_URL + 'players/' + str(player_id) + '/wl', None)
+            # wl_dict = self.request_data(OPEN_DOTA_URL + 'players/' + str(player_id) + '/wl', None)
 
-            # Get information from 25 most recent matches where they played this role
-            params = {"limit": 25, "game_mode": 22, "lane_role_id": curr_lane}
+            # VERY IMPORTANT
+            # '/players/92580861/recentMatches'
+
+
+            # Get information from 20 most recent matches where they played this role
+            params = {"limit": 20, "game_mode": 22, "lane_role_id": curr_lane}
             recent_matches = self.request_data(OPEN_DOTA_URL + 'players/' + str(player_id) + '/matches', params)
 
             recent_wl, recent_leaver, curr_team_wl = [], [], []  # Just counts, no real computations
@@ -194,8 +198,8 @@ class DataPreprocesser():
     # Group status may be important detail
     # Is the person on radiant or dire
     def process_players(self, match):
-        print(match)  # TO REMOVE
-        print(self.request_data(OPEN_DOTA_URL + '/matches/' + str(match['match_id']), None))
+        #print(match)  # TO REMOVE
+        #print(self.request_data(OPEN_DOTA_URL + '/matches/' + str(match['match_id']), None))
 
         players = []
         anon_players = []
