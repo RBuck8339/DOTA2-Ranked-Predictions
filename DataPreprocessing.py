@@ -50,6 +50,14 @@ import time # Just so that we don't go over allowed calls per minute
 
 OPEN_DOTA_URL = f'https://api.opendota.com/api/'
 
+# REST API Documentation
+# https://docs.stratz.com/index.html 
+STRATZ_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJTdWJqZWN0IjoiZTg0ZjQ3ZDMtMjViZC00MWFjLTk5MDEtODc4M2U1OTg1ZjY2IiwiU3RlYW1JZCI6IjExNTUxNTk3OTIiLCJuYmYiOjE3MTY4NzEzODEsImV4cCI6MTc0ODQwNzM4MSwiaWF0IjoxNzE2ODcxMzgxLCJpc3MiOiJodHRwczovL2FwaS5zdHJhdHouY29tIn0.V9os4YLxMhMI7f5PFZgObBJsoMrLUkmKjv2DxN4SvOg'
+
+STRATZ_GRAPHQL = 'https://api.stratz.com/graphiql/'
+
+# "Content-Type": "application/json"
+
 class DataPreprocesser():
     def __init__(self, connection, cursor):
         # For the SQL database
@@ -62,7 +70,7 @@ class DataPreprocesser():
         self.players = pd.DataFrame()
 
     
-    def request_data(self, source, params):
+    def request_data_OpenDota(self, source, params):
         # Default, most querys have no parameters
         if params == None:
             response = requests.get(source) 
@@ -78,6 +86,47 @@ class DataPreprocesser():
             print(f"Error: {response.status_code}")
             return None
 
+
+    def request_data_Stratz(self, params, type):
+        if type == "Match":
+            url = 'https://api.stratz.com/graphql'
+            headers = {
+                
+                'Authorization': f'Bearer {STRATZ_TOKEN}',
+                'Content-Type': 'application/json'
+            }
+            query = """
+            query GetMatchDetails($matchId: Long!){
+                match(id: $matchId) {
+                    id
+                    players {
+                        steamAccountId
+                        heroId
+                        numDenies
+                        numLastHits
+                        lane
+                        kills
+                        deaths
+                        assists
+                        goldPerMinute
+                        experiencePerMinute
+                        heroId
+                        }
+                    
+                }
+            }
+            """
+            variables = {
+                "matchId": int(params['matchId'])
+            }
+            response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
+
+            if response.status_code == 200:
+                return response.json()
+            
+            else:
+                print(f"Error fetching match details from Stratz: {response.status_code}")
+                return None
 
     # Calculate player stats
     # Thinking of adding: 
@@ -107,8 +156,8 @@ class DataPreprocesser():
 
 
             # Get information from 20 most recent matches where they played this role
-            params = {"limit": 20, "game_mode": 22, "lane_role_id": curr_lane}
-            recent_matches = self.request_data(OPEN_DOTA_URL + 'players/' + str(player_id) + '/matches', params)
+            # params = {"limit": 20, "game_mode": 22, "lane_role_id": curr_lane}
+            recent_matches = self.request_data_OpenDota(OPEN_DOTA_URL + 'players/' + str(player_id) + '/recentMatches', None)
 
             recent_wl, recent_leaver, curr_team_wl = [], [], []  # Just counts, no real computations
             kdas, kills, deaths, assists = np.array(), np.array(), np.array(), np.array()  # To speed up computations
@@ -219,23 +268,30 @@ class DataPreprocesser():
 
     # Generate a set of new matches and find info about the players
     def match_info(self):
-        new_matches = self.request_data(OPEN_DOTA_URL + '/publicMatches', params={"min_rank": 70}) # A list of 100 matches
+        new_matches = self.request_data_OpenDota(OPEN_DOTA_URL + '/publicMatches', params={"min_rank": 70}) # A list of 100 matches
 
         # Process each match individually
         for match in new_matches:
-            curr_match = self.request_data(OPEN_DOTA_URL + '/matches/' + str(match['match_id']), None) # A list of 100 matches
+            curr_match = self.request_data_OpenDota(OPEN_DOTA_URL + '/matches/' + str(match['match_id']), None) # A list of 100 matches
             self.process_players(curr_match)
 
 
-    def other_stats(self):
+    def other_stats(self, matches):
         pass
 
     
     # Merge Data into the format that I need and return it
-    def merge(self):
+    def merge_data(self):
         pass
 
     
+    # Add to the database of players and matches
+    def to_database(self):
+        self.players.to_sql("Players", self.connection, if_exists='append', index=False)
+
+        self.matches.to_sql("Matches", self.connection, if_exists='append', index=False)
+
+
     # If the database exists and has enough records
     def to_dataframes(self):
         self.players = pd.read_sql_query("SELECT * FROM Players", self.connection)

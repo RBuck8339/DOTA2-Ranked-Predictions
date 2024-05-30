@@ -1,9 +1,10 @@
+from h11 import Data
 import pandas as pd
 import sqlite3
 import requests
 import json
 
-from DataPreprocessing import DataPreprocesser
+from DataPreprocessing import DataPreprocesser, OPEN_DOTA_URL
 
 # Database setup
 connection = sqlite3.connect('dota2.db')
@@ -81,21 +82,6 @@ teams_table_constructor = """CREATE TABLE TEAMS (
 
 cursor.execute(match_table_constructor)
 
-
-OPEN_DOTA_URL = f'https://api.opendota.com/api/'
-
-STEAM_API_KEY = "9F2A12AEAFE23E3271CC20C18145CDB2"
-
-# REST API Documentation
-# https://docs.stratz.com/index.html 
-STRATZ_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJTdWJqZWN0IjoiZTg0ZjQ3ZDMtMjViZC00MWFjLTk5MDEtODc4M2U1OTg1ZjY2IiwiU3RlYW1JZCI6IjExNTUxNTk3OTIiLCJuYmYiOjE3MTY4NzEzODEsImV4cCI6MTc0ODQwNzM4MSwiaWF0IjoxNzE2ODcxMzgxLCJpc3MiOiJodHRwczovL2FwaS5zdHJhdHouY29tIn0.V9os4YLxMhMI7f5PFZgObBJsoMrLUkmKjv2DxN4SvOg'
-
-STRATZ_GRAPHQL = 'https://api.stratz.com/graphiql/'
-headers = {
-    "Authorization": f"Bearer {STRATZ_TOKEN}",
-    "Content-Type": "application/json"
-}
-
 #response = requests.get(OPEN_DOTA_URL + '/proPlayers')  # Returns json for every single pro player
 #response = requests.get(OPEN_DOTA_URL + '/proMatches')  # Returns json for every single match
 #response = requests.get(OPEN_DOTA_URL + '/teams/9088071')  # Returns json for information about team X
@@ -111,20 +97,15 @@ def get_match():
         print(f"Error: {response.status_code}")
         return None
 
-
-def save_match():
-    pass
-
-
-def api_calls():
-    pass
-
-
 def generate_model_data():
     myfile = get_match()
     print(len(myfile))
 
 MyProcesser = DataPreprocesser(connection, cursor)
+
+print(DataPreprocesser.request_data_OpenDota(MyProcesser, OPEN_DOTA_URL + '/publicMatches', params={"min_rank": 70}))
+
+#print(DataPreprocesser.request_data_Stratz(MyProcesser, {'matchId': 7756630500}, "Match"))
 
 #DataPreprocesser.match_info(MyProcesser)
 
@@ -137,4 +118,4 @@ MyProcesser = DataPreprocesser(connection, cursor)
 # Querying the match actually gives a lot more data
 
 
-generate_model_data()
+#generate_model_data()
