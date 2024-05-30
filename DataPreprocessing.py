@@ -68,6 +68,7 @@ class DataPreprocesser():
         self.data = pd.DataFrame()
         self.matches = pd.DataFrame()
         self.players = pd.DataFrame()
+        self.player_stats_match = pd.DataFrame()
 
     
     def request_data_OpenDota(self, source, params):
@@ -82,51 +83,131 @@ class DataPreprocesser():
         if response.status_code == 200:
             return response.json()
         
+        # If we have hit our request limit, update the database
+        elif response.status_code == 429:
+            self.to_database()
+
         else:
             print(f"Error: {response.status_code}")
             return None
 
 
     def request_data_Stratz(self, params, type):
+        # Info necessary to query
+        url = 'https://api.stratz.com/graphql'
+        headers = {
+            
+            'Authorization': f'Bearer {STRATZ_TOKEN}',
+            'Content-Type': 'application/json'
+        }
+
         if type == "Match":
-            url = 'https://api.stratz.com/graphql'
-            headers = {
-                
-                'Authorization': f'Bearer {STRATZ_TOKEN}',
-                'Content-Type': 'application/json'
-            }
+            # Excessive amount of info for now
             query = """
             query GetMatchDetails($matchId: Long!){
                 match(id: $matchId) {
                     id
-                    players {
-                        steamAccountId
-                        heroId
-                        numDenies
-                        numLastHits
-                        lane
-                        kills
-                        deaths
-                        assists
-                        goldPerMinute
-                        experiencePerMinute
-                        heroId
-                        }
-                    
-                }
+                    didRadiantWin
+                    durationSeconds
+                    towerStatusRadiant
+                    towerStatusDire
+                    barracksStatusRadiant
+                    barracksStatusDire
+                    gameMode
+                    averageRank
+                    isStats
+                    radiantKills
+                    predictedWinRates
+                    winRates
+                    radiantKills
+                    direKills
+                    radiantNetworthLeads
+                    radiantExperienceLeads
+                    gameVersionId
+                    topLaneOutcome
+                    midLaneOutcome
+                    bottomLaneOutcome
+                        players {
+                            steamAccountId
+                            heroId
+                            numDenies
+                            numLastHits
+                            lane
+                            kills
+                            deaths
+                            assists
+                            goldPerMinute
+                            experiencePerMinute
+                            heroId
+                            }
+
+                    }
             }
             """
             variables = {
                 "matchId": int(params['matchId'])
             }
-            response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
 
-            if response.status_code == 200:
-                return response.json()
+        elif type == 'PlayerInfo':
+            query = """
+            query getPlayerDetails($steamAccountId: Long!){
+                player(steamAccountId:141014623) {
+                    matches(request: {
+                        isParsed: true, isParty: false,
+                        positionIds: POSITION_1, lobbyTypeIds: 7,
+                        take: 50
+                    }) {
+                        id
+                        didRadiantWin
+                        startDateTime
+
+                        players(steamAccountId: 141014623) {
+                            steamAccountId
+                            isRadiant
+                            kills
+                            deaths
+                            assists
+                            networth
+                            goldPerMinute
+                            numLastHits 
+                            numDenies
+                            experiencePerMinute
+                            towerDamage
+                            heroDamage
+                            heroHealing
+                            leaverStatus	
+                            stats {
+                                campStack
+                                wards {
+                                type
+                                }
+                                wardDestruction {
+                                isWard
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            """
             
-            else:
-                print(f"Error fetching match details from Stratz: {response.status_code}")
-                return None
+            variables = {
+                "steamAccountId": int(params['steamAccountId'])
+            }
+
+
+        response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
+
+        if response.status_code == 200:
+            return response.json()
+        
+        # If we have hit our request limit, update the database
+        elif response.status_code == 429:
+                    self.to_database()
+
+        else:
+            print(f"Error fetching match details from Stratz: {response.status_code}")
+            return None
 
     # Calculate player stats
     # Thinking of adding: 
@@ -255,7 +336,7 @@ class DataPreprocesser():
 
         # For each player in the match, get their ID or note there isn't one
         for player in match['players']:
-            if player.get('account_id') is not None:
+            if player.get('steamAccountId') is not None:
                 players.append(player)
 
             # Should append role, prob a dict
@@ -272,7 +353,17 @@ class DataPreprocesser():
 
         # Process each match individually
         for match in new_matches:
-            curr_match = self.request_data_OpenDota(OPEN_DOTA_URL + '/matches/' + str(match['match_id']), None) # A list of 100 matches
+            curr_match = self.request_data_Stratz(params={'matchId': match['id']}, type="Match") # A list of 100 matches
+
+            # Prepare players for future analysis (not current task)
+            players_to_add = []
+            for player in curr_match['match']['players']:
+                player['match_Id'] = curr_match['match']['id']
+            
+            # Add to the dataframe
+            temp_df = pd.DataFrame(players_to_add)
+            self.player_stats_match = pd.concat([temp_df, self.player_stats_match], ignore_index=True)
+
             self.process_players(curr_match)
 
 
@@ -288,7 +379,6 @@ class DataPreprocesser():
     # Add to the database of players and matches
     def to_database(self):
         self.players.to_sql("Players", self.connection, if_exists='append', index=False)
-
         self.matches.to_sql("Matches", self.connection, if_exists='append', index=False)
 
 
