@@ -50,13 +50,8 @@ import time # Just so that we don't go over allowed calls per minute
 
 OPEN_DOTA_URL = f'https://api.opendota.com/api/'
 
-# REST API Documentation
-# https://docs.stratz.com/index.html 
 STRATZ_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJTdWJqZWN0IjoiZTg0ZjQ3ZDMtMjViZC00MWFjLTk5MDEtODc4M2U1OTg1ZjY2IiwiU3RlYW1JZCI6IjExNTUxNTk3OTIiLCJuYmYiOjE3MTY4NzEzODEsImV4cCI6MTc0ODQwNzM4MSwiaWF0IjoxNzE2ODcxMzgxLCJpc3MiOiJodHRwczovL2FwaS5zdHJhdHouY29tIn0.V9os4YLxMhMI7f5PFZgObBJsoMrLUkmKjv2DxN4SvOg'
-
 STRATZ_GRAPHQL = 'https://api.stratz.com/graphiql/'
-
-# "Content-Type": "application/json"
 
 class DataPreprocesser():
     def __init__(self, connection, cursor):
@@ -71,6 +66,7 @@ class DataPreprocesser():
         self.player_stats_match = pd.DataFrame()
 
     
+    # Request data from the Open Dota REST API
     def request_data_OpenDota(self, source, params):
         # Default, most querys have no parameters
         if params == None:
@@ -92,6 +88,7 @@ class DataPreprocesser():
             return None
 
 
+    # Request data from Stratz GraphQl application
     def request_data_Stratz(self, params, type):
         # Info necessary to query
         url = 'https://api.stratz.com/graphql'
@@ -104,7 +101,7 @@ class DataPreprocesser():
         if type == "Match":
             # Excessive amount of info for now
             query = """
-            query GetMatchDetails($matchId: Long!){
+            query GetMatchDetails($matchId: Long!) {
                 match(id: $matchId) {
                     id
                     didRadiantWin
@@ -114,34 +111,29 @@ class DataPreprocesser():
                     barracksStatusRadiant
                     barracksStatusDire
                     gameMode
-                    averageRank
-                    isStats
-                    radiantKills
-                    predictedWinRates
-                    winRates
                     radiantKills
                     direKills
-                    radiantNetworthLeads
-                    radiantExperienceLeads
                     gameVersionId
-                    topLaneOutcome
-                    midLaneOutcome
-                    bottomLaneOutcome
-                        players {
-                            steamAccountId
-                            heroId
-                            numDenies
-                            numLastHits
-                            lane
-                            kills
-                            deaths
-                            assists
-                            goldPerMinute
-                            experiencePerMinute
-                            heroId
-                            }
-
+                    firstBloodTime
+                    players {
+                    steamAccountId
+                    heroId
+                    position
+                    numDenies
+                    numLastHits
+                    position
+                    kills
+                    deaths
+                    assists
+                    networth
+                    goldPerMinute
+                    experiencePerMinute
+                    heroDamage
+                    towerDamage
+                    heroHealing
+                    isRadiant
                     }
+                }
             }
             """
             variables = {
@@ -150,39 +142,38 @@ class DataPreprocesser():
 
         elif type == 'PlayerInfo':
             query = """
-            query getPlayerDetails($steamAccountId: Long!){
-                player(steamAccountId:141014623) {
-                    matches(request: {
-                        isParsed: true, isParty: false,
-                        positionIds: POSITION_1, lobbyTypeIds: 7,
-                        take: 50
-                    }) {
+            query getPlayerDetails($steamAccountId: Long!, $position: [MatchPlayerPositionType]!) {
+                player(steamAccountId: $steamAccountId) {
+                    winCount
+                    matchCount
+                    matches(request: {isParsed: true, positionIds: $position, lobbyTypeIds: 7, take: 50}) {
                         id
                         didRadiantWin
-                        startDateTime
-
-                        players(steamAccountId: 141014623) {
+                        players(steamAccountId: $steamAccountId) {
                             steamAccountId
                             isRadiant
+                            position
                             kills
                             deaths
                             assists
                             networth
                             goldPerMinute
-                            numLastHits 
+                            gold
+                            numLastHits
                             numDenies
                             experiencePerMinute
                             towerDamage
                             heroDamage
                             heroHealing
-                            leaverStatus	
+                            isVictory
+                            leaverStatus
                             stats {
                                 campStack
                                 wards {
-                                type
+                                    type
                                 }
                                 wardDestruction {
-                                isWard
+                                    isWard
                                 }
                             }
                         }
@@ -190,11 +181,11 @@ class DataPreprocesser():
                 }
             }
             """
-            
-            variables = {
-                "steamAccountId": int(params['steamAccountId'])
-            }
 
+            variables = {
+                "steamAccountId": int(params['steamAccountId']),
+                "position": params['position']
+            }
 
         response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
 
@@ -203,7 +194,8 @@ class DataPreprocesser():
         
         # If we have hit our request limit, update the database
         elif response.status_code == 429:
-                    self.to_database()
+            self.to_database()
+            return None
 
         else:
             print(f"Error fetching match details from Stratz: {response.status_code}")
@@ -211,67 +203,84 @@ class DataPreprocesser():
 
     # Calculate player stats
     # Thinking of adding: 
-    #   Players winrate on the team they are on
-    #   Role specific stats instead of general
     #   Not yet, but eventually winrate after X minutes
     #   Not yet, but eventually most played heros (one hot encoding)
-    #   If player is on their main role
-    #   Average advantages against lane opponent?
-    def process_player_info(self, players, match):
+    def process_player_info(self, players):
         for player in players:
-            player_stats = {} # Init/Reset dict
+            player_stats = {}  # Init/Reset dict
 
-            if player['player_slot'] < 128:
+            player_id = player['account_id']
+            position = player['position']
+
+            if player['isRadiant'] == True:
                 curr_team_radiant = 1
             else:
                 curr_team_radiant = 0
 
-            player_id = player['account_id']
-            curr_lane = player['player_slot'] % 128
-
-            # Calculate Players Win/Loss Ratio
-            # wl_dict = self.request_data(OPEN_DOTA_URL + 'players/' + str(player_id) + '/wl', None)
-
-            # VERY IMPORTANT
-            # '/players/92580861/recentMatches'
-
-
-            # Get information from 20 most recent matches where they played this role
-            # params = {"limit": 20, "game_mode": 22, "lane_role_id": curr_lane}
-            recent_matches = self.request_data_OpenDota(OPEN_DOTA_URL + 'players/' + str(player_id) + '/recentMatches', None)
+            recent_matches = self.request_data_Stratz(params={'steamAccountId': player_id, 'position': position}, type = "PlayerInfo")
 
             recent_wl, recent_leaver, curr_team_wl = [], [], []  # Just counts, no real computations
-            kdas, kills, deaths, assists = np.array(), np.array(), np.array(), np.array()  # To speed up computations
+            kdas, kills, deaths, assists, networth, gpm, exp_pm = np.array(), np.array(), np.array(), np.array(), np.array(), np.array()  # To speed up computations
+            cs_score, denies, tower_damage, hero_damage, hero_healing, vision = np.array(), np.array(), np.array(), np.array(), np.array(), np.array(), np.array()  # To speed up computations
+
+            # Compute on the current role
+            if len(recent_matches) < 20:
+                main_kdas, main_kills, main_deaths, main_assists, main_networth, main_gpm, main_exp_pm = np.array(), np.array(), np.array(), np.array(), np.array(), np.array()  # To speed up computations
+                main_cs_score, main_denies, main_tower_damage, main_hero_damage, main_hero_healing = np.array(), np.array(), np.array(), np.array(), np.array(), np.array()  # To speed up computations
+
+                for curr_match in recent_matches['matches']['players']:
+
+                    # If the player hasnt died, don't divide by 0
+                    if curr_match['deaths'] > 0:
+                        np.append(main_kdas, ((curr_match['kills'] + curr_match['assits']) / curr_match['deaths']))
+                    else:
+                        np.append(main_kdas, (curr_match['kills'] + curr_match['assists']))
+
+                    # Add player stats to array
+                    np.append(main_kills, curr_match['kills'])
+                    np.append(main_deaths, curr_match['deaths'])
+                    np.append(main_assists, curr_match['assists'])
+                    np.append(main_networth, curr_match['gold'])
+                    np.append(main_gpm, curr_match['goldPerMinute'])
+                    np.append(main_exp_pm, curr_match['experiencePerMinute'])
+                    np.append(main_cs_score, curr_match['numLastHits'])
+                    np.append(main_denies, curr_match['numDenies'])
+                    np.append(main_tower_damage, curr_match['towerDamage'])
+                    np.append(main_hero_damage, curr_match['heroDamage'])
+                    np.append(main_hero_healing, curr_match['heroHealing'])
+
+                params = {'steamAccountId': player_id, 'position': ["POSITION_1", "POSITION_2", "POSITION_3", "POSITION_4", "POSITION_5"]}  # Use all positions this time
+                recent_matches = self.request_data_Stratz(params=params, type = "PlayerInfo")  # Run query again across all matches regardless of role
 
             # Find statistics from last 50 matches
-            for curr_match in recent_matches:
-                if curr_match['player_slot'] < 128:
-                    curr_match_team = "Radiant"
-                else:
-                    curr_match_team = "Dire"
+            for curr_match in recent_matches['matches']['players']:
+                vision_count = np.array()
 
-                # If player won this match
-                if (curr_match_team == "Radiant" and curr_match['radiant_win'] == True) or (curr_match_team == "Dire" and curr_match['radiant_win'] == False):
+                # Find if the player won and which team they were on when they won
+                if curr_match['isVictory'] == True:
                     recent_wl.append(1)
-                else: 
+                    if(curr_team_radiant == 1 and curr_match['isRadiant'] == True):
+                        curr_team_wl.append(1)
+                    elif(curr_team_radiant == 0 and curr_match['isRadiant'] == False):
+                        curr_team_wl.append(1)
+                    else:
+                        curr_team_wl.append(2)
+                else:
                     recent_wl.append(0)
-
-                # Match is not on this team, don't count it
-                if (curr_match_team == "Radiant" and curr_team_radiant == 0) or (curr_match_team == "Dire" and curr_team_radiant == 1):
-                    curr_team_wl.append(2)
-
-                elif (curr_match_team == "Radiant" and curr_team_radiant == 1):
-                    if(curr_match['radiant_win'] == 1):
-                        curr_team_wl.append(1)
-                    else:
+                    if(curr_team_radiant == 1 and curr_match['isRadiant'] == True):
                         curr_team_wl.append(0)
-                
-                elif (curr_match_team == "Dire" and curr_team_radiant == 0):
-                    if(curr_match['radiant_win'] == 0):
-                        curr_team_wl.append(1)
-                    else:
+                    elif(curr_team_radiant == 0 and curr_match['isRadiant'] == False):
                         curr_team_wl.append(0)
+                    else:
+                        curr_team_wl.append(2)
 
+                # Find players vision contribution
+                for ward in curr_match['wards']:
+                    np.append(vision_count, ward['type'])
+                for ward in curr_match['wardDestruction']:
+                    # Don't count summonable units that provide vision
+                    if(ward['isWard'] == True):
+                        np.append(vision_count, 1)
 
                 # If the player hasnt died, don't divide by 0
                 if curr_match['deaths'] > 0:
@@ -283,31 +292,73 @@ class DataPreprocesser():
                 np.append(kills, curr_match['kills'])
                 np.append(deaths, curr_match['deaths'])
                 np.append(assists, curr_match['assists'])
+                np.append(networth, curr_match['gold'])
+                np.append(gpm, curr_match['goldPerMinute'])
+                np.append(exp_pm, curr_match['experiencePerMinute'])
+                np.append(cs_score, curr_match['numLastHits'])
+                np.append(denies, curr_match['numDenies'])
+                np.append(tower_damage, curr_match['towerDamage'])
+                np.append(hero_damage, curr_match['heroDamage'])
+                np.append(hero_healing, curr_match['heroHealing'])
+                np.append(vision, vision_count.size)
                 
-
             # Easily accessible stats
             player_stats['account_id'] = player_id
-            player_stats['win_rate'] = wl_dict['win'] / (wl_dict['win'] + wl_dict['lose'])  # Calculate Lifetime win/loss percent
+            player_stats['win_rate'] = player['winCount'] / player['matchCount']  # Calculate Lifetime win/loss percent
             player_stats['rank'] = player['rank_tier']  # Find player rank in current match
 
-            # Calculate stats and add to dict
-            player_stats['average_kda'] = np.mean(kdas)
-            player_stats['average_kills'] = np.mean(kills)
-            player_stats['average_deaths'] = np.mean(deaths)
-            player_stats['average_assists'] = np.mean(assists)
-            #player_stats['average_cs'] = 
-            #player_stats['average_denies'] = 
-            #player_stats['average_ward_score'] = 
-            player_stats['recent_win_rate'] = (recent_wl.count(1) / len(recent_wl)) 
-            player_stats['recent_times_left'] = (recent_leaver.count(1) / len(recent_leaver))
-            player_stats['curr_team_wl_rate'] = curr_team_wl.count(1) / (curr_team_wl.count(1) + curr_team_wl.count(0))
-            player_stats['curr_position'] = curr_lane
-            player_stats['player_is_radiant'] = curr_team_radiant
+            # Since we don't have enough matches to just rely off of main
+            if len(recent_matches) < 20:
+                main_kdas, main_kills, main_deaths, main_assists, main_networth, main_gpm, main_exp_pm = np.array(), np.array(), np.array(), np.array(), np.array(), np.array()  # To speed up computations
+                main_cs_score, main_denies, main_tower_damage, main_hero_damage, main_hero_healing = np.array(), np.array(), np.array(), np.array(), np.array(), np.array()  # To speed up computations
+
+                # Calculate stats and add to dict
+                player_stats['average_kda'] = self.supplementary_matches_calc(np.mean(main_kdas), len(main_kdas), np.mean(kdas), len(kdas))
+                player_stats['average_kills'] = self.supplementary_matches_calc(np.mean(main_kills), len(main_kills), np.mean(kills), len(kills))
+                player_stats['average_deaths'] = self.supplementary_matches_calc(np.mean(main_deaths), len(main_deaths), np.mean(deaths), len(deaths))
+                player_stats['average_assists'] = self.supplementary_matches_calc(np.mean(main_assists), len(main_assists), np.mean(assists), len(assists))
+                player_stats['average_cs'] = self.supplementary_matches_calc(np.mean(main_cs_score), len(main_cs_score), np.mean(cs_score), len(cs_score))
+                player_stats['average_denies'] = self.supplementary_matches_calc(np.mean(main_denies), len(main_denies), np.mean(denies), len(denies))
+                player_stats['average_networth'] = self.supplementary_matches_calc(np.mean(main_networth), len(main_networth), np.mean(networth), len(networth))
+                player_stats['average_gold_per_minute'] = self.supplementary_matches_calc(np.mean(main_gpm), len(main_gpm), np.mean(gpm), len(gpm))
+                player_stats['average_exp_per_minute'] = self.supplementary_matches_calc(np.mean(main_exp_pm), len(main_exp_pm), np.mean(exp_pm), len(exp_pm))
+                player_stats['average_tower_damage'] = self.supplementary_matches_calc(np.mean(main_tower_damage), len(main_kdas), np.mean(tower_damage), len(tower_damage))
+                player_stats['average_hero_damage'] = self.supplementary_matches_calc(np.mean(main_hero_damage), len(main_hero_damage), np.mean(hero_damage), len(hero_damage))
+                player_stats['average_hero_healing'] = self.supplementary_matches_calc(np.mean(main_hero_healing), len(main_hero_healing), np.mean(hero_healing), len(hero_healing))
+                
+                # More reflective on all games
+                player_stats['average_vision_participation'] = vision.size
+                player_stats['recent_win_rate'] = (recent_wl.count(1) / len(recent_wl)) 
+                player_stats['recent_times_left'] = (recent_leaver.count(1) / len(recent_leaver))
+                player_stats['curr_team_wl_rate'] = curr_team_wl.count(1) / (curr_team_wl.count(1) + curr_team_wl.count(0))
+
+
+            else:
+                 # Calculate stats and add to dict
+                player_stats['average_kda'] = np.mean(kdas)
+                player_stats['average_kills'] = np.mean(kills)
+                player_stats['average_deaths'] = np.mean(deaths)
+                player_stats['average_assists'] = np.mean(assists)
+                player_stats['average_cs'] = np.mean(cs_score)
+                player_stats['average_denies'] = np.mean(denies)
+                player_stats['average_networth'] = np.mean(networth)
+                player_stats['average_gold_per_minute'] = np.mean(gpm)
+                player_stats['average_exp_per_minute'] = np.mean(exp_pm)
+                player_stats['average_tower_damage'] = np.mean(tower_damage)
+                player_stats['average_hero_damage'] = np.mean(hero_damage)
+                player_stats['average_hero_healing'] = np.mean(hero_healing)
+                player_stats['average_vision_participation'] = np.mean(vision)
+                player_stats['recent_win_rate'] = (recent_wl.count(1) / len(recent_wl)) 
+                player_stats['recent_times_left'] = (recent_leaver.count(1) / len(recent_leaver))
+                player_stats['curr_team_wl_rate'] = curr_team_wl.count(1) / (curr_team_wl.count(1) + curr_team_wl.count(0))
 
             
             self.players = pd.concat([self.players, player_stats], ignore_index=True)
            
-            
+
+    def supplementary_matches_calc(self, main_stat, num_main, supp_stat, num_supp):
+        value = ((main_stat * num_main) + (supp_stat * num_supp)) / 50
+        return value
 
     # If a player is appearing anonymous
     def process_anon_player(self, players, anon_players, match):
@@ -322,15 +373,7 @@ class DataPreprocesser():
             self.players = pd.concat([self.players, player_stats], ignore_index=True)
 
 
-    # So I can query the player account id and get the following stats
-    # W/L ratio over X games (Could also do it by their role) only in ranked
-    # Can calculate stuff like kills, deaths, assists, average match duration, if they left recently doing /players/id/matches (Also allows role param)
-    # Group status may be important detail
-    # Is the person on radiant or dire
     def process_players(self, match):
-        #print(match)  # TO REMOVE
-        #print(self.request_data(OPEN_DOTA_URL + '/matches/' + str(match['match_id']), None))
-
         players = []
         anon_players = []
 
@@ -341,6 +384,7 @@ class DataPreprocesser():
 
             # Should append role, prob a dict
             else:
+                print("Found anonymous player")  # Since Stratz might not respect hidden profiles
                 anon_players.append(player)
                 
         self.process_player_info(players, match)
@@ -349,31 +393,33 @@ class DataPreprocesser():
 
     # Generate a set of new matches and find info about the players
     def match_info(self):
-        new_matches = self.request_data_OpenDota(OPEN_DOTA_URL + '/publicMatches', params={"min_rank": 70}) # A list of 100 matches
+        new_matches = self.request_data_OpenDota(OPEN_DOTA_URL + '/publicMatches', params={"min_rank": 75}) # A list of 100 matches
 
         # Process each match individually
         for match in new_matches:
-            curr_match = self.request_data_Stratz(params={'matchId': match['id']}, type="Match") # A list of 100 matches
+            curr_match = self.request_data_Stratz(params={'matchId': match['id']}, type="Match")
+            curr_match['averageRank'] = match['avg_rank_tier']
 
             # Prepare players for future analysis (not current task)
             players_to_add = []
             for player in curr_match['match']['players']:
-                player['match_Id'] = curr_match['match']['id']
+                player['matchId'] = curr_match['match']['id']
+
+                players_to_add.append(player)
+
+                # Add heros to match data for later analysis
+                if player['isRadiant'] == True:
+                    curr_match['Radiant_' + player['position'] + '_hero'] = player['heroId']
+                elif player['isRadiant'] == False:
+                    curr_match['Dire_' + player['position'] + '_hero'] = player['heroId']
             
-            # Add to the dataframe
+            # Add to the dataframes
             temp_df = pd.DataFrame(players_to_add)
             self.player_stats_match = pd.concat([temp_df, self.player_stats_match], ignore_index=True)
+            temp_match_df = pd.DataFrame(curr_match)
+            self.matches = pd.concat([temp_match_df, self.matches], ignore_index=True)
 
             self.process_players(curr_match)
-
-
-    def other_stats(self, matches):
-        pass
-
-    
-    # Merge Data into the format that I need and return it
-    def merge_data(self):
-        pass
 
     
     # Add to the database of players and matches
@@ -391,3 +437,8 @@ class DataPreprocesser():
     def clean(self):
         self.players = self.players.drop_duplicates()
         self.matches = self.matches.drop_duplicates()
+
+    
+    # Merge Data into the format that I need and return it
+    def merge_data(self):
+        pass
