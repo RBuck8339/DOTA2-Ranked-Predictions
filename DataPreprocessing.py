@@ -1,51 +1,8 @@
-# Likely important stats (pregame)
-'''
-By Player:
-- Average Kills
-- Average Deaths
-- Average Assists
-- Average Denies
-- Average Creep Score
-- Average Wards
-- Total Moneys
-- Total gold spent
-- Average Gold Per Minute
-- Average Tower Damage
-- Win/Loss Ratio 
-- Stuns
-- Damage
-- Healing
-
-For team:
-- Team Composition
-- First Blood Rate
-- Average Roshan Kills
-- Average tower kills
-- Average Barracks kills
-- Average Match Duration
-- Early/Late game win rates
-- Expected Heros
-
-By Hero:
-- Hero scalability
-- Hero impact
-- Hero winrate (By patch)
-'''
-
-# Two problems
-'''
-One: Predict match outcome only knowing pre match info (no heros) Binary Classification
-Two: Predict how the match will play out knowing players and the draft Regression
-'''
-
-
 from asyncio.windows_events import NULL
 import requests
-import json
 import sqlite3
 import pandas as pd
 import numpy as np
-
 import time # Just so that we don't go over allowed calls per minute
 
 
@@ -212,7 +169,7 @@ class DataPreprocesser():
     #   Not yet, but eventually most played heros (one hot encoding)
     # Is set up to use Stratz, I'd rather not change
     def process_player_info(self, players):
-        players = []  # Since it may be needed for anonymous player calculations
+        player_list = []  # Since it may be needed for anonymous player calculations
 
         for player in players:
             player_stats = {}  # Init/Reset dict
@@ -368,6 +325,10 @@ class DataPreprocesser():
             temp_df = pd.DataFrame(player_stats)
             print(temp_df)
             self.players = pd.concat([self.players, temp_df], ignore_index=True)
+
+            player_list.append(player_stats)
+
+        return player_list
            
 
     # Calculations when there are not enough matches on desired position
@@ -440,7 +401,7 @@ class DataPreprocesser():
 
         # For each player in the match, get their ID or note there isn't one
         for player in match['players']:
-            if player.get('steamAccountId') is not None:
+            if player.get('account_id') is not None:
                 players.append(player)
 
             # Should append role, prob a dict
@@ -448,8 +409,8 @@ class DataPreprocesser():
                 print("Found anonymous player")  # Since Stratz might not respect hidden profiles
                 anon_players.append(player)
                 
-        self.process_player_info(players, match)
-        self.process_anon_player(players, anon_players, match)
+        player_list = self.process_player_info(players, match)
+        self.process_anon_player(player_list, anon_players, match)
             
 
     # Generate a set of new matches and find info about the players
@@ -492,58 +453,28 @@ class DataPreprocesser():
 
             # Add to the dataframes
             temp_dict = curr_match
-            temp_dict = temp_dict.pop('players')
+            temp_dict = temp_dict.pop('players')  # We don't want this in the dataframe
             temp_df = pd.DataFrame(temp_dict)
-            print(temp_df)
             self.player_stats_match = pd.concat([temp_df, self.player_stats_match], ignore_index=True)
             temp_match_df = pd.DataFrame([curr_match])
-            print(temp_match_df)
             self.matches = pd.concat([temp_match_df, self.matches], ignore_index=True)
 
             self.process_players(curr_match)
 
 
-    # Remove unwanted keys from the dict
+    # Keeps the keys that we wnat to analyze, can edit
     def clean_match(self, match):
         keys = ['match_id', 'barracks_status_dire', 'barracks_status_radiant', 'dire_score', 'duration', 'first_blood_time', 'game_mode', 'league_id',
                 'match_seq_num, radiant_gold_adv', 'radiant_score', 'radiant_xp_adv', 'radiant_win', 'tower_status_dire', 'tower_status_radiant', 'version', 'series_id', 'patch']
 
-
         new_match = {key: match[key] for key in keys if key in match}
 
-                    # Get endgame advantage +/-
+        players = match['players']
+
+        # Get endgame advantage +/-
         new_match['radiant_gold_adv'] = new_match['radiant_gold_adv'][-1]
         new_match['radiant_xp_adv'] = new_match['radiant_xp_adv'][-1]
-        match.pop('chat')
-        match.pop('cluster')
-        match.pop('cosmetics')
-        match.pop('draft_timings')
-        match.pop('engine')
-        match.pop('human_players')
-        match.pop('negative_votes')
-        match.pop('objectives')
-        match.pop('picks_bans')
-        match.pop('positive_votes')
-        match.pop('start_time')
-        match.pop('teamfights')
-        match.pop('replay_salt')
-        match.pop('series_id')
-        match.pop('series_type')
-        match.pop('radiant_team')
-        match.pop('dire_team')
-        match.pop('league')
-        match.pop('skill')
-        match.pop('version')
-        match.pop('all_word_counts')
-        match.pop('my_word_counts')
-        match.pop('throw')
-        match.pop('comeback')
-        match.pop('loss')
-        match.pop('win')
-        match.pop('replay_url')
-        players = match['players']
-        match.pop('players')
-
+        
         return match, players 
     
 
