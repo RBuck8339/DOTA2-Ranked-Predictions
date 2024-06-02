@@ -210,6 +210,7 @@ class DataPreprocesser():
     # Thinking of adding: 
     #   Not yet, but eventually winrate after X minutes
     #   Not yet, but eventually most played heros (one hot encoding)
+    # Is set up to use Stratz, I'd rather not change
     def process_player_info(self, players):
         players = []  # Since it may be needed for anonymous player calculations
 
@@ -464,24 +465,15 @@ class DataPreprocesser():
             if match['lobby_type'] != 7:
                 continue
 
-            curr_match = self.request_data_Stratz(params={'matchId': int(match['match_id'])}, type="Match")
-            curr_match = curr_match['data']['match']
+            curr_match = self.request_data_OpenDota(OPEN_DOTA_URL + '/matches/' + match['match_id'], None)
 
-            # Since the match IDs sometimes don't match up
-            if curr_match == None or curr_match == NULL:
-                curr_match = self.request_data_Stratz(params={'matchId': int(match['match_seq_num'])}, type="Match")
-                curr_match = curr_match['data']['match']
-                if curr_match == None:
-                    print(f"Skipping match id {match['match_id']}")
-                    continue
-
-            print(curr_match)
+            curr_match, players = self.clean_match(curr_match)
 
             curr_match['averageRank'] = match['avg_rank_tier']
 
             # Prepare players for future analysis (not current task)
             players_to_add = []
-            for player in curr_match['players']:
+            for player in players:
                 player['matchId'] = curr_match['id']
 
                 players_to_add.append(player)
@@ -510,7 +502,64 @@ class DataPreprocesser():
 
             self.process_players(curr_match)
 
+
+    # Remove unwanted keys from the dict
+    def clean_match(self, match):
+        keys = ['match_id', 'barracks_status_dire', 'barracks_status_radiant', 'dire_score', 'duration', 'first_blood_time', 'game_mode', 'league_id',
+                'match_seq_num, radiant_gold_adv', 'radiant_score', 'radiant_xp_adv', 'radiant_win', 'tower_status_dire', 'tower_status_radiant', 'version', 'series_id', 'patch']
+
+
+        new_match = {key: match[key] for key in keys if key in match}
+
+                    # Get endgame advantage +/-
+        new_match['radiant_gold_adv'] = new_match['radiant_gold_adv'][-1]
+        new_match['radiant_xp_adv'] = new_match['radiant_xp_adv'][-1]
+        match.pop('chat')
+        match.pop('cluster')
+        match.pop('cosmetics')
+        match.pop('draft_timings')
+        match.pop('engine')
+        match.pop('human_players')
+        match.pop('negative_votes')
+        match.pop('objectives')
+        match.pop('picks_bans')
+        match.pop('positive_votes')
+        match.pop('start_time')
+        match.pop('teamfights')
+        match.pop('replay_salt')
+        match.pop('series_id')
+        match.pop('series_type')
+        match.pop('radiant_team')
+        match.pop('dire_team')
+        match.pop('league')
+        match.pop('skill')
+        match.pop('version')
+        match.pop('all_word_counts')
+        match.pop('my_word_counts')
+        match.pop('throw')
+        match.pop('comeback')
+        match.pop('loss')
+        match.pop('win')
+        match.pop('replay_url')
+        players = match['players']
+        match.pop('players')
+
+        return match, players 
     
+
+    # Keeps the keys that we want to analyze, can edit
+    def clean_player(self, player):
+        # player.pop('damage')  # THINK ABOUT IT
+        # player.pop('damage_taken')  # THINK ABOUT IT
+        # player.pop('rune_pickups')  # THINK ABOUT IT
+
+        keys = ['match_id', 'player_slot', 'account_id', 'assists', 'camps_stacked', 'deaths', 'denies', 'gold', 'gold_perm_min', 'hero_damage', 'hero_healing'
+                'hero_id', 'kills', 'lane_pos', 'last_hits', 'leaver_status', 'obs_placed', 'sen_placed', 'tower_damaged', 'xp_per_min', 'isRadiant', 'total_gold', 'kda', 'rank_tier']
+        
+        new_player = {key: player[key] for key in keys if key in player}
+        return new_player
+
+
     # Add to the database of players and matches
     def to_database(self):
         self.players.to_sql("Players", self.connection, if_exists='append', index=False)
