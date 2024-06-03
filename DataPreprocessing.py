@@ -46,7 +46,7 @@ class DataPreprocesser():
             return None
 
 
-    # Request data from Stratz GraphQl application
+    # Request data from Stratz GraphQL application
     def request_data_Stratz(self, params, type):
         # Info necessary to query
         url = 'https://api.stratz.com/graphql'
@@ -175,7 +175,8 @@ class DataPreprocesser():
             player_stats = {}  # Init/Reset dict
 
             player_id = player['account_id']
-            position = player['position']
+            position = (player['team_slot'] % 128) + 1
+            position = 'POSITION_' + str(position)
 
             if player['isRadiant'] == True:
                 curr_team_radiant = 1
@@ -185,13 +186,13 @@ class DataPreprocesser():
             recent_matches = self.request_data_Stratz(params={'steamAccountId': player_id, 'position': position}, type = "PlayerInfo")
 
             recent_wl, recent_leaver, curr_team_wl = [], [], []  # Just counts, no real computations
-            kdas, kills, deaths, assists, networth, gpm, exp_pm = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])  # To speed up computations
-            cs_score, denies, tower_damage, hero_damage, hero_healing, vision, camp_stacks, imp = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])    # To speed up computations
+            kdas, kills, deaths, assists, networth, gpm, exp_pm = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])  # To speed up computations
+            cs_score, denies, tower_damage, hero_damage, hero_healing, vision, camp_stacks, imp = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])    # To speed up computations
 
             # Compute on the current role
-            if len(recent_matches) < 20:
-                main_kdas, main_kills, main_deaths, main_assists, main_networth, main_gpm, main_exp_pm = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])  # To speed up computations
-                main_cs_score, main_denies, main_tower_damage, main_hero_damage, main_hero_healing, main_camp_stacks, main_imp = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])  # To speed up computations
+            if recent_matches is None or len(recent_matches) < 20:
+                main_kdas, main_kills, main_deaths, main_assists, main_networth, main_gpm, main_exp_pm = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])  # To speed up computations
+                main_cs_score, main_denies, main_tower_damage, main_hero_damage, main_hero_healing, main_camp_stacks, main_imp = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])  # To speed up computations
 
                 for curr_match in recent_matches['matches']['players']:
 
@@ -277,7 +278,7 @@ class DataPreprocesser():
             player_stats['rank'] = player['rank']  # Find player rank in current match
 
             # Since we don't have enough matches to just rely off of main
-            if len(recent_matches) < 20:
+            if not (recent_matches == None) or len(recent_matches) < 20:
                 # Calculate stats and add to dict
                 player_stats['average_kda'] = self.supplementary_matches_calc(np.mean(main_kdas), len(main_kdas), np.mean(kdas), len(kdas))
                 player_stats['average_kills'] = self.supplementary_matches_calc(np.mean(main_kills), len(main_kills), np.mean(kills), len(kills))
@@ -339,8 +340,8 @@ class DataPreprocesser():
 
     # If a player is appearing anonymous
     def process_anon_player(self, players, anon_players, match):
-        kdas, kills, deaths, assists, networth, gpm, exp_pm = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])  # To speed up computations
-        cs_score, denies, tower_damage, hero_damage, hero_healing, vision, camp_stacks, imp = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])    # To speed up computations
+        kdas, kills, deaths, assists, networth, gpm, exp_pm = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])  # To speed up computations
+        cs_score, denies, tower_damage, hero_damage, hero_healing, vision, camp_stacks, imp = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])  # To speed up computations
 
         # Find the average stats of known players in the match
         for player in players:
@@ -394,30 +395,34 @@ class DataPreprocesser():
 
 
     # Find all players previous match statistics
-    def process_players(self, match):
+    def process_players(self, match, players):
         print(match)
-        players = []
+        player_list = []
         anon_players = []
 
         # For each player in the match, get their ID or note there isn't one
-        for player in match['players']:
+        for player in players:
             if player.get('account_id') is not None:
-                players.append(player)
+                player_list.append(player)
 
             # Should append role, prob a dict
             else:
                 print("Found anonymous player")  # Since Stratz might not respect hidden profiles
                 anon_players.append(player)
-                
-        player_list = self.process_player_info(players, match)
+        
+        # Don't have enough players to analyze, try a new match
+        if len(player_list) <= 5:
+            return 0
+        
+        player_list = self.process_player_info(player_list)
         self.process_anon_player(player_list, anon_players, match)
+
+        return 1  # Enough players to do this
             
 
     # Generate a set of new matches and find info about the players
     def match_info(self):
         new_matches = self.request_data_OpenDota(OPEN_DOTA_URL + '/publicMatches', params={"min_rank": 70}) # A list of 100 matches
-
-        print(new_matches)        
 
         # Process each match individually
         for match in new_matches:
@@ -426,69 +431,100 @@ class DataPreprocesser():
             if match['lobby_type'] != 7:
                 continue
 
-            curr_match = self.request_data_OpenDota(OPEN_DOTA_URL + '/matches/' + match['match_id'], None)
+            curr_match = self.request_data_OpenDota(OPEN_DOTA_URL + '/matches/' + str(match['match_id']), None)
 
             curr_match, players = self.clean_match(curr_match)
+
+            print(players[0].keys())
 
             curr_match['averageRank'] = match['avg_rank_tier']
 
             # Prepare players for future analysis (not current task)
             players_to_add = []
             for player in players:
-                player['matchId'] = curr_match['id']
+                player['matchId'] = curr_match['match_id']
 
                 players_to_add.append(player)
 
-                print(player['position'])
-
                 # Add heros to match data for later analysis
                 if player['isRadiant'] == True:
-                    curr_match['Radiant_' + player['position'] + '_hero'] = player['heroId']
-                    curr_match['Radiant_' + player['position'] + 'id'] = player['steamAccountId']
+                    curr_match['Radiant_' + 'Position' + str((player['team_slot'] % 128) + 1) + '_hero'] = player['hero_id']
+                    if player.get('account_id') is not None:
+                        curr_match['Radiant_' + 'Position_' + str((player['team_slot'] % 128) + 1) + 'id'] = player['account_id']
+                    else:
+                        curr_match['Radiant_' + 'Position_' + str((player['team_slot'] % 128) + 1) + 'id'] = np.NaN
                 elif player['isRadiant'] == False:
-                    curr_match['Dire_' + player['position'] + '_hero'] = player['heroId']
-            
-            curr_match['radiantKills'] = np.array(curr_match['radiantKills']).sum()
-            curr_match['direKills'] = np.array(curr_match['direKills']).sum()
+                    curr_match['Dire_' + 'Position' + str((player['team_slot'] % 128) + 1) + '_hero'] = player['hero_id']
+                    if player.get('account_id') is not None:
+                        curr_match['Dire_' + 'Position_' + str((player['team_slot'] % 128) + 1) + 'id'] = player['account_id']
+                    else:
+                        curr_match['Dire_' + 'Position_' + str((player['team_slot'] % 128) + 1) + 'id'] = np.NaN
 
+            res = self.process_players(curr_match, players)
+
+            # If we found that there are not enough players to analyze, skip this match
+            if res == 0:
+                continue
+            
             # Add to the dataframes
-            temp_dict = curr_match
-            temp_dict = temp_dict.pop('players')  # We don't want this in the dataframe
+            temp_dict = players
             temp_df = pd.DataFrame(temp_dict)
             self.player_stats_match = pd.concat([temp_df, self.player_stats_match], ignore_index=True)
             temp_match_df = pd.DataFrame([curr_match])
             self.matches = pd.concat([temp_match_df, self.matches], ignore_index=True)
 
-            self.process_players(curr_match)
-
 
     # Keeps the keys that we wnat to analyze, can edit
     def clean_match(self, match):
         keys = ['match_id', 'barracks_status_dire', 'barracks_status_radiant', 'dire_score', 'duration', 'first_blood_time', 'game_mode', 'league_id',
-                'match_seq_num, radiant_gold_adv', 'radiant_score', 'radiant_xp_adv', 'radiant_win', 'tower_status_dire', 'tower_status_radiant', 'version', 'series_id', 'patch']
+                'match_seq_num', 'radiant_gold_adv', 'radiant_score', 'radiant_xp_adv', 'radiant_win', 'tower_status_dire', 'tower_status_radiant', 'version', 'series_id', 'patch']
 
         new_match = {key: match[key] for key in keys if key in match}
 
         players = match['players']
 
-        # Get endgame advantage +/-
-        new_match['radiant_gold_adv'] = new_match['radiant_gold_adv'][-1]
-        new_match['radiant_xp_adv'] = new_match['radiant_xp_adv'][-1]
+        # Rename keys
+        new_match['radiant_kills'] = new_match['radiant_score']
+        new_match.pop('radiant_score')
+        new_match['dire_kills'] = new_match['dire_score']
+        new_match.pop('dire_score')
+
+        radiant_gold, dire_gold = np.array([]), np.array([])
+        radiant_xp, dire_xp = np.array([]), np.array([])
+
+        # Get the total amount of gold and experience per team
+        for player in players:
+            if player['isRadiant'] == True:
+                np.append(radiant_gold, player['total_gold'])
+                np.append(radiant_xp, player['total_xp'])
+            else:
+                np.append(dire_gold, player['total_gold'])
+                np.append(dire_xp, player['total_xp'])
+
+        total_radiant_gold = np.sum(radiant_gold)
+        total_dire_gold = np.sum(dire_gold)
+        total_radiant_xp = np.sum(radiant_xp)
+        total_dire_xp = np.sum(dire_xp)
+
+        new_match['total_radiant_gold_adv'] = total_radiant_gold - total_dire_gold
+        new_match['total_radiant_xp_adv'] = total_radiant_xp - total_dire_xp
+
+        players = self.clean_players(players)
         
-        return match, players 
+        return new_match, players 
     
 
     # Keeps the keys that we want to analyze, can edit
-    def clean_player(self, player):
-        # player.pop('damage')  # THINK ABOUT IT
-        # player.pop('damage_taken')  # THINK ABOUT IT
-        # player.pop('rune_pickups')  # THINK ABOUT IT
-
-        keys = ['match_id', 'player_slot', 'account_id', 'assists', 'camps_stacked', 'deaths', 'denies', 'gold', 'gold_perm_min', 'hero_damage', 'hero_healing'
-                'hero_id', 'kills', 'lane_pos', 'last_hits', 'leaver_status', 'obs_placed', 'sen_placed', 'tower_damaged', 'xp_per_min', 'isRadiant', 'total_gold', 'kda', 'rank_tier']
+    def clean_players(self, players):
+        keys = ['match_id', 'player_slot', 'account_id', 'assists', 'camps_stacked', 'damage', 'damage_taken', 'deaths', 'denies', 'gold_perm_min', 'hero_damage', 'hero_healing',
+                'hero_id', 'kills', 'team_slot', 'last_hits', 'leaver_status', 'rune_pickups', 'obs_placed', 'sen_placed', 'tower_damaged', 'xp_per_min', 'isRadiant', 'total_gold', 'kda', 'rank_tier']
         
-        new_player = {key: player[key] for key in keys if key in player}
-        return new_player
+        new_player_list = []
+        for player in players:
+            new_player = {key: player[key] for key in keys if key in player}
+            new_player_list.append(new_player)
+
+        return new_player_list
 
 
     # Add to the database of players and matches
@@ -503,6 +539,7 @@ class DataPreprocesser():
         self.matches = pd.read_sql_query("SELECT * FROM Matches", self.connection)
 
     
+    # Clean up the dataframes before providing as input to model
     def clean(self):
         self.players = self.players.drop_duplicates()
         self.matches = self.matches.drop_duplicates()
