@@ -105,7 +105,10 @@ class DataPreprocesser():
                 player(steamAccountId: $steamAccountId) {
                     winCount
                     matchCount
-                    rank
+                    ranks{
+                        rank
+                        seasonRankId
+                    }
                     matches(request: {isParsed: true, positionIds: $position, lobbyTypeIds: 7, take: 50}) {
                         id
                         didRadiantWin
@@ -149,7 +152,6 @@ class DataPreprocesser():
             }
 
         response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
-        print(response.content)
 
         if response.status_code == 200:
             return response.json()
@@ -176,7 +178,7 @@ class DataPreprocesser():
 
             player_id = player['account_id']
             position = (player['team_slot'] % 128) + 1
-            position = 'POSITION_' + str(position)
+            position = "POSITION_" + str(position)
 
             if player['isRadiant'] == True:
                 curr_team_radiant = 1
@@ -184,18 +186,20 @@ class DataPreprocesser():
                 curr_team_radiant = 0
 
             recent_matches = self.request_data_Stratz(params={'steamAccountId': player_id, 'position': position}, type = "PlayerInfo")
+            print(recent_matches)
+            recent_matches = recent_matches['data']['player']
 
             recent_wl, recent_leaver, curr_team_wl = [], [], []  # Just counts, no real computations
             kdas, kills, deaths, assists, networth, gpm, exp_pm = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])  # To speed up computations
             cs_score, denies, tower_damage, hero_damage, hero_healing, vision, camp_stacks, imp = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])    # To speed up computations
 
             # Compute on the current role
-            if recent_matches is None or len(recent_matches) < 20:
+            if len(recent_matches) < 20:
                 main_kdas, main_kills, main_deaths, main_assists, main_networth, main_gpm, main_exp_pm = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])  # To speed up computations
                 main_cs_score, main_denies, main_tower_damage, main_hero_damage, main_hero_healing, main_camp_stacks, main_imp = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])  # To speed up computations
 
                 for curr_match in recent_matches['matches']['players']:
-
+                    curr_match = curr_match['players'][0]
                     # If the player hasnt died, don't divide by 0
                     if curr_match['deaths'] > 0:
                         np.append(main_kdas, ((curr_match['kills'] + curr_match['assits']) / curr_match['deaths']))
@@ -219,10 +223,13 @@ class DataPreprocesser():
 
                 params = {'steamAccountId': player_id, 'position': ["POSITION_1", "POSITION_2", "POSITION_3", "POSITION_4", "POSITION_5"]}  # Use all positions this time
                 recent_matches = self.request_data_Stratz(params=params, type = "PlayerInfo")  # Run query again across all matches regardless of role
+                recent_matches = recent_matches['data']['player']
 
             # Find statistics from last 50 matches
-            for curr_match in recent_matches['matches']['players']:
+            for curr_match in recent_matches['matches']:
                 vision_count = np.array()
+
+                curr_match = curr_match['players'][0]
 
                 # Find if the player won and which team they were on when they won
                 if curr_match['isVictory'] == True:
@@ -231,6 +238,8 @@ class DataPreprocesser():
                         curr_team_wl.append(1)
                     elif(curr_team_radiant == 0 and curr_match['isRadiant'] == False):
                         curr_team_wl.append(1)
+                    
+                    # Player is on a different team than we want to check
                     else:
                         curr_team_wl.append(2)
                 else:
@@ -239,6 +248,8 @@ class DataPreprocesser():
                         curr_team_wl.append(0)
                     elif(curr_team_radiant == 0 and curr_match['isRadiant'] == False):
                         curr_team_wl.append(0)
+
+                    # Player is on a different team than we want to check
                     else:
                         curr_team_wl.append(2)
 
@@ -275,10 +286,10 @@ class DataPreprocesser():
             # Easily accessible stats
             player_stats['account_id'] = player_id
             player_stats['win_rate'] = player['winCount'] / player['matchCount']  # Calculate Lifetime win/loss percent
-            player_stats['rank'] = player['rank']  # Find player rank in current match
+            player_stats['rank'] = player['ranks'][0]['rank']  # Find player rank in current match
 
             # Since we don't have enough matches to just rely off of main
-            if not (recent_matches == None) or len(recent_matches) < 20:
+            if len(recent_matches) < 20:
                 # Calculate stats and add to dict
                 player_stats['average_kda'] = self.supplementary_matches_calc(np.mean(main_kdas), len(main_kdas), np.mean(kdas), len(kdas))
                 player_stats['average_kills'] = self.supplementary_matches_calc(np.mean(main_kills), len(main_kills), np.mean(kills), len(kills))
@@ -333,13 +344,13 @@ class DataPreprocesser():
            
 
     # Calculations when there are not enough matches on desired position
-    def supplementary_matches_calc(self, main_stat, num_main, supp_stat, num_supp):
+    def supplementary_matches_calc(self, main_stat, num_main, supp_stat, num_supp) -> float:
         # Average for main role we want to analyze times number of matches + overall performance times overall matches divided by total matches
         value = ((main_stat * num_main) + (supp_stat * num_supp)) / 50
         return value
 
     # If a player is appearing anonymous
-    def process_anon_player(self, players, anon_players, match):
+    def process_anon_player(self, players, anon_players, match) -> None:
         kdas, kills, deaths, assists, networth, gpm, exp_pm = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])  # To speed up computations
         cs_score, denies, tower_damage, hero_damage, hero_healing, vision, camp_stacks, imp = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])  # To speed up computations
 
@@ -395,7 +406,7 @@ class DataPreprocesser():
 
 
     # Find all players previous match statistics
-    def process_players(self, match, players):
+    def process_players(self, match, players) -> int:
         print(match)
         player_list = []
         anon_players = []
@@ -421,7 +432,7 @@ class DataPreprocesser():
             
 
     # Generate a set of new matches and find info about the players
-    def match_info(self):
+    def match_info(self) -> None:
         new_matches = self.request_data_OpenDota(OPEN_DOTA_URL + '/publicMatches', params={"min_rank": 70}) # A list of 100 matches
 
         # Process each match individually
@@ -475,7 +486,7 @@ class DataPreprocesser():
 
 
     # Keeps the keys that we wnat to analyze, can edit
-    def clean_match(self, match):
+    def clean_match(self, match) -> dict:
         keys = ['match_id', 'barracks_status_dire', 'barracks_status_radiant', 'dire_score', 'duration', 'first_blood_time', 'game_mode', 'league_id',
                 'match_seq_num', 'radiant_gold_adv', 'radiant_score', 'radiant_xp_adv', 'radiant_win', 'tower_status_dire', 'tower_status_radiant', 'version', 'series_id', 'patch']
 

@@ -73,7 +73,4 @@ DataPreprocesser.match_info(MyProcesser)
 'league_name': 'Dota 2 Space League', 'series_id': 879062, 'series_type': 1, 'radiant_score': 24, 'dire_score': 37, 'radiant_win': False, 'version': 21}
 '''
 
-# Querying the match actually gives a lot more data
-
-
 #generate_model_data()
