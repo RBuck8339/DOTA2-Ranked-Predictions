@@ -189,6 +189,11 @@ class DataPreprocesser():
             print(recent_matches)
             recent_matches = recent_matches['data']['player']
 
+            # Easily accessible stats
+            player_stats['account_id'] = player_id
+            player_stats['win_rate'] = recent_matches['winCount'] / recent_matches['matchCount']  # Calculate Lifetime win/loss percent
+            player_stats['rank'] = recent_matches['ranks'][0]['rank']  # Find player rank in current match
+
             recent_wl, recent_leaver, curr_team_wl = [], [], []  # Just counts, no real computations
             kdas, kills, deaths, assists, networth, gpm, exp_pm = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])  # To speed up computations
             cs_score, denies, tower_damage, hero_damage, hero_healing, vision, camp_stacks, imp = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])    # To speed up computations
@@ -218,8 +223,8 @@ class DataPreprocesser():
                     np.append(main_tower_damage, curr_match['towerDamage'])
                     np.append(main_hero_damage, curr_match['heroDamage'])
                     np.append(main_hero_healing, curr_match['heroHealing'])
-                    np.append(main_camp_stacks, curr_match['stats']['campStack'][-1])
                     np.append(main_imp, curr_match['imp'])
+
                     if not (curr_match['stats']['campStack'] is None):
                         np.append(main_camp_stacks, curr_match['stats']['campStack'][-1])
                     else:
@@ -233,7 +238,7 @@ class DataPreprocesser():
             for curr_match in recent_matches['matches']:
                 vision_count = np.array([])
 
-                curr_match = curr_match['players'][0]
+                curr_match = curr_match['players'][0]  # Get the player we are analyzing
 
                 # Find if the player won and which team they were on when they won
                 if curr_match['isVictory'] == True:
@@ -256,6 +261,12 @@ class DataPreprocesser():
                     # Player is on a different team than we want to check
                     else:
                         curr_team_wl.append(2)
+
+                # Check if the player left the match early
+                if curr_match['leaverStatus'] == 'NONE':
+                    recent_leaver.append(0)
+                else:
+                    recent_leaver.append(1)
 
                 # Find players vision contribution
                 for ward in curr_match['stats']['wards']:
@@ -290,11 +301,6 @@ class DataPreprocesser():
                     np.append(camp_stacks, curr_match['stats']['campStack'][-1])
                 else:
                     np.append(camp_stacks, 0)
-                
-            # Easily accessible stats
-            player_stats['account_id'] = player_id
-            player_stats['win_rate'] = player['winCount'] / player['matchCount']  # Calculate Lifetime win/loss percent
-            player_stats['rank'] = player['ranks'][0]['rank']  # Find player rank in current match
 
             # Since we don't have enough matches to just rely off of main
             if len(recent_matches) < 20:
@@ -341,6 +347,8 @@ class DataPreprocesser():
                 player_stats['recent_win_rate'] = (recent_wl.count(1) / len(recent_wl)) 
                 player_stats['recent_times_left'] = (recent_leaver.count(1) / len(recent_leaver))
                 player_stats['curr_team_wl_rate'] = curr_team_wl.count(1) / (curr_team_wl.count(1) + curr_team_wl.count(0))
+
+            print(player_stats)
 
             temp_df = pd.DataFrame(player_stats)
             print(temp_df)
