@@ -198,11 +198,11 @@ class DataPreprocesser():
                 main_kdas, main_kills, main_deaths, main_assists, main_networth, main_gpm, main_exp_pm = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])  # To speed up computations
                 main_cs_score, main_denies, main_tower_damage, main_hero_damage, main_hero_healing, main_camp_stacks, main_imp = np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([]), np.array([])  # To speed up computations
 
-                for curr_match in recent_matches['matches']['players']:
+                for curr_match in recent_matches['matches']:
                     curr_match = curr_match['players'][0]
                     # If the player hasnt died, don't divide by 0
                     if curr_match['deaths'] > 0:
-                        np.append(main_kdas, ((curr_match['kills'] + curr_match['assits']) / curr_match['deaths']))
+                        np.append(main_kdas, ((curr_match['kills'] + curr_match['assists']) / curr_match['deaths']))
                     else:
                         np.append(main_kdas, (curr_match['kills'] + curr_match['assists']))
 
@@ -220,6 +220,10 @@ class DataPreprocesser():
                     np.append(main_hero_healing, curr_match['heroHealing'])
                     np.append(main_camp_stacks, curr_match['stats']['campStack'][-1])
                     np.append(main_imp, curr_match['imp'])
+                    if not (curr_match['stats']['campStack'] is None):
+                        np.append(main_camp_stacks, curr_match['stats']['campStack'][-1])
+                    else:
+                        np.append(main_camp_stacks, 0)
 
                 params = {'steamAccountId': player_id, 'position': ["POSITION_1", "POSITION_2", "POSITION_3", "POSITION_4", "POSITION_5"]}  # Use all positions this time
                 recent_matches = self.request_data_Stratz(params=params, type = "PlayerInfo")  # Run query again across all matches regardless of role
@@ -227,7 +231,7 @@ class DataPreprocesser():
 
             # Find statistics from last 50 matches
             for curr_match in recent_matches['matches']:
-                vision_count = np.array()
+                vision_count = np.array([])
 
                 curr_match = curr_match['players'][0]
 
@@ -254,16 +258,16 @@ class DataPreprocesser():
                         curr_team_wl.append(2)
 
                 # Find players vision contribution
-                for ward in curr_match['wards']:
+                for ward in curr_match['stats']['wards']:
                     np.append(vision_count, ward['type'])
-                for ward in curr_match['wardDestruction']:
+                for ward in curr_match['stats']['wardDestruction']:
                     # Don't count summonable units that provide vision
                     if(ward['isWard'] == True):
                         np.append(vision_count, 1)
 
                 # If the player hasnt died, don't divide by 0
                 if curr_match['deaths'] > 0:
-                    np.append(((curr_match['kills'] + curr_match['assits']) / curr_match['deaths']))
+                    np.append(kdas, ((curr_match['kills'] + curr_match['assists']) / curr_match['deaths']))
                 else:
                     np.append(kdas, (curr_match['kills'] + curr_match['assists']))
 
@@ -280,8 +284,12 @@ class DataPreprocesser():
                 np.append(hero_damage, curr_match['heroDamage'])
                 np.append(hero_healing, curr_match['heroHealing'])
                 np.append(vision, vision_count.size)
-                np.append(camp_stacks, curr_match['stats']['campStack'][-1])
                 np.append(imp, curr_match['imp'])
+
+                if not (curr_match['stats']['campStack'] is None):
+                    np.append(camp_stacks, curr_match['stats']['campStack'][-1])
+                else:
+                    np.append(camp_stacks, 0)
                 
             # Easily accessible stats
             player_stats['account_id'] = player_id
