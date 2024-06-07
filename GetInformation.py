@@ -2,14 +2,14 @@ import pandas as pd
 import sqlite3
 import requests
 
-from DataPreprocessing import DataPreprocesser, OPEN_DOTA_URL
+from DataPreprocessing import DataPreprocesser
 
 # Database setup
 connection = sqlite3.connect('dota2.db')
 cursor = connection.cursor()
 
-cursor.execute('DROP TABLE IF EXISTS Matches')
-cursor.execute('DROP TABLE IF EXISTS Players')
+#cursor.execute('DROP TABLE IF EXISTS Matches')
+#cursor.execute('DROP TABLE IF EXISTS Players')
 
 # / matches/7551252460
 '''
@@ -19,7 +19,6 @@ cursor.execute('DROP TABLE IF EXISTS Players')
 'series_id': 877789, 'series_type': 1, 'radiant_score': 36, 'dire_score': 17, 
 'radiant_win': True, 'version': None}
 '''
-
 
 # /teams/9302584/players
 '''
@@ -48,22 +47,7 @@ cursor.execute('DROP TABLE IF EXISTS Players')
 #response = requests.get(OPEN_DOTA_URL + '/teams/9088071')  # Returns json for information about team X
 #response = requests.get(OPEN_DOTA_URL + '/teams/9088071/players')  # Returns json for every single player on team X
 
-def get_match():
-    endpoint = OPEN_DOTA_URL + '/players/92580861/recentMatches'
-    response = requests.get(endpoint)  # Returns my information
-    if response.status_code == 200:
-        return response.json()
-    
-    else:
-        print(f"Error: {response.status_code}")
-        return None
-
-def generate_model_data():
-    myfile = get_match()
-    print(len(myfile))
-
 MyProcesser = DataPreprocesser(connection, cursor)
-
 DataPreprocesser.match_info(MyProcesser)
 
 ''' /proMatches
@@ -71,6 +55,3 @@ DataPreprocesser.match_info(MyProcesser)
 'dire_name': 'VERTEX PACK', 'leagueid': 16635, 
 'league_name': 'Dota 2 Space League', 'series_id': 879062, 'series_type': 1, 'radiant_score': 24, 'dire_score': 37, 'radiant_win': False, 'version': 21}
 '''
-
-
-#generate_model_data()
