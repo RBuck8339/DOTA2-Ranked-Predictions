@@ -8,8 +8,10 @@ from DataPreprocessing import DataPreprocesser
 connection = sqlite3.connect('dota2.db')
 cursor = connection.cursor()
 
-#cursor.execute('DROP TABLE IF EXISTS Matches')
-#cursor.execute('DROP TABLE IF EXISTS Players')
+# While verifying everything works
+cursor.execute('DROP TABLE IF EXISTS Matches')
+cursor.execute('DROP TABLE IF EXISTS Players')
+cursor.execute('DROP TABLE IF EXISTS PlayerStatsMatch')
 
 # / matches/7551252460
 '''
@@ -55,3 +57,5 @@ DataPreprocesser.match_info(MyProcesser)
 'dire_name': 'VERTEX PACK', 'leagueid': 16635, 
 'league_name': 'Dota 2 Space League', 'series_id': 879062, 'series_type': 1, 'radiant_score': 24, 'dire_score': 37, 'radiant_win': False, 'version': 21}
 '''
+
+

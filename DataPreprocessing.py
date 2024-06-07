@@ -279,12 +279,17 @@ class DataPreprocesser():
                     recent_leaver.append(1)
 
                 # Find players vision contribution
-                if(curr_match['stats']['wards'] == None):
+                if(curr_match['stats']['wards'] is None):
                     pass
                 
                 else:
                     for ward in curr_match['stats']['wards']:
                         vision_count = np.append(vision_count, ward['type'])
+
+                if(curr_match['stats']['wardDestruction'] is None):
+                    pass
+                
+                else:
                     for ward in curr_match['stats']['wardDestruction']:
                         # Don't count summonable units that provide vision
                         if(ward['isWard'] == True):
@@ -518,8 +523,10 @@ class DataPreprocesser():
 
             print(f'Current number of matches processed: {(self.matches.shape)[0]}')
             print(f'Current number of players processed: {(self.players.shape)[0]}')
-        
+
         self.to_database()
+
+        self.match_info()  # Repeat
 
 
     # Keeps the keys that we wnat to analyze, can edit
@@ -577,6 +584,7 @@ class DataPreprocesser():
 
     # Add to the database of players and matches
     def to_database(self):
+        print("Sending to database")
         self.players.to_sql("Players", self.connection, if_exists='append', index=False)
         self.matches.to_sql("Matches", self.connection, if_exists='append', index=False)
         self.player_stats_match.to_sql("PlayerStatsMatch", self.connection, if_exists='append', index=False)
@@ -593,19 +601,9 @@ class DataPreprocesser():
         self.players = pd.read_sql_query(query, self.connection)
 
         table_name = 'Matches'
-        query = f"""
-            SELECT name 
-            FROM sqlite_master 
-            WHERE type='table' AND name='{table_name}';
-        """
         self.matches = pd.read_sql_query(query, self.connection)
 
         table_name = 'PlayerStatsMatch'
-        query = f"""
-            SELECT name 
-            FROM sqlite_master 
-            WHERE type='table' AND name='{table_name}';
-        """
         self.player_stats_match = pd.read_sql_query(query, self.connection)
 
     
