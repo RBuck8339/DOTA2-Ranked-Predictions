@@ -194,7 +194,7 @@ class DataPreprocesser():
             player_stats['win_rate'] = recent_matches['winCount'] / recent_matches['matchCount']  # Calculate Lifetime win/loss percent
 
             # Since Stratz can sometimes not return a rank
-            if not (recent_matches['ranks'] == []):
+            if not (recent_matches['ranks'] == None or recent_matches['ranks'] == []):
                 player_stats['rank'] = recent_matches['ranks'][0]['rank']  # Find player rank in current match
             else:
                 player_stats['rank'] = match['averageRank']  # Assign average rank since the players rank isn't listed
@@ -491,24 +491,27 @@ class DataPreprocesser():
             players_to_add = []
             for player in players:
                 player['matchId'] = curr_match['match_id']
+                
+                player['position'] = (player['team_slot'] % 128) + 1
 
                 players_to_add.append(player)
 
                 # Add heros to match data for later analysis
                 if player['isRadiant'] == True:
-                    curr_match['Radiant_' + 'Position' + str((player['team_slot'] % 128) + 1) + '_hero'] = player['hero_id']
+                    curr_match['Radiant_' + 'Position' + str(player['position']) + '_hero'] = player['hero_id']
                     if player.get('account_id') is not None:
-                        curr_match['Radiant_' + 'Position_' + str((player['team_slot'] % 128) + 1) + 'id'] = player['account_id']
+                        curr_match['Radiant_' + 'Position_' + str(player['position']) + 'id'] = player['account_id']
                     else:
-                        curr_match['Radiant_' + 'Position_' + str((player['team_slot'] % 128) + 1) + 'id'] = np.NaN
+                        curr_match['Radiant_' + 'Position_' + str(player['position']) + 'id'] = np.NaN
                 elif player['isRadiant'] == False:
-                    curr_match['Dire_' + 'Position' + str((player['team_slot'] % 128) + 1) + '_hero'] = player['hero_id']
+                    curr_match['Dire_' + 'Position' + str(player['position']) + '_hero'] = player['hero_id']
                     if player.get('account_id') is not None:
-                        curr_match['Dire_' + 'Position_' + str((player['team_slot'] % 128) + 1) + 'id'] = player['account_id']
+                        curr_match['Dire_' + 'Position_' + str(player['position']) + 'id'] = player['account_id']
                     else:
-                        curr_match['Dire_' + 'Position_' + str((player['team_slot'] % 128) + 1) + 'id'] = np.NaN
+                        curr_match['Dire_' + 'Position_' + str(player['position']) + 'id'] = np.NaN
 
-            res = self.process_players(curr_match, players)
+            curr_players = players
+            res = self.process_players(curr_match, curr_players)
 
             # If we found that there are not enough players to analyze, skip this match
             if res == 0:
@@ -532,7 +535,7 @@ class DataPreprocesser():
     # Keeps the keys that we wnat to analyze, can edit
     def clean_match(self, match) -> dict:
         keys = ['match_id', 'barracks_status_dire', 'barracks_status_radiant', 'dire_score', 'duration', 'first_blood_time', 'game_mode', 'league_id',
-                'match_seq_num', 'radiant_gold_adv', 'radiant_score', 'radiant_xp_adv', 'radiant_win', 'tower_status_dire', 'tower_status_radiant', 'version', 'series_id', 'patch']
+                'match_seq_num', 'radiant_score', 'radiant_win', 'tower_status_dire', 'tower_status_radiant', 'version', 'series_id', 'patch']
 
         new_match = {key: match[key] for key in keys if key in match}
 
@@ -585,8 +588,11 @@ class DataPreprocesser():
     # Add to the database of players and matches
     def to_database(self):
         print("Sending to database")
+        print(self.players)
         self.players.to_sql("Players", self.connection, if_exists='append', index=False)
+        print(self.matches)
         self.matches.to_sql("Matches", self.connection, if_exists='append', index=False)
+        print(self.player_stats_match)
         self.player_stats_match.to_sql("PlayerStatsMatch", self.connection, if_exists='append', index=False)
 
 
