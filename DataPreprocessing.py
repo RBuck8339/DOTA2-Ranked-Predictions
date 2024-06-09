@@ -1,9 +1,7 @@
-from asyncio.windows_events import NULL
 import requests
-import sqlite3
 import pandas as pd
 import numpy as np
-import time # Just so that we don't go over allowed calls per minute
+import time  # Just so that we don't go over allowed calls per minute
 
 
 OPEN_DOTA_URL = f'https://api.opendota.com/api/'
@@ -11,6 +9,7 @@ OPEN_DOTA_URL = f'https://api.opendota.com/api/'
 STRATZ_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJTdWJqZWN0IjoiZTg0ZjQ3ZDMtMjViZC00MWFjLTk5MDEtODc4M2U1OTg1ZjY2IiwiU3RlYW1JZCI6IjExNTUxNTk3OTIiLCJuYmYiOjE3MTY4NzEzODEsImV4cCI6MTc0ODQwNzM4MSwiaWF0IjoxNzE2ODcxMzgxLCJpc3MiOiJodHRwczovL2FwaS5zdHJhdHouY29tIn0.V9os4YLxMhMI7f5PFZgObBJsoMrLUkmKjv2DxN4SvOg'
 STRATZ_GRAPHQL = 'https://api.stratz.com/graphiql/'
 
+# Class used to generate, clean, and retrieve information related to DOTA2 ranked matches
 class DataPreprocesser():
     def __init__(self, connection, cursor):
         # For the SQL database
@@ -39,7 +38,7 @@ class DataPreprocesser():
         if response.status_code == 200:
             return response.json()
         
-        # If we have hit our request limit, update the database
+        # If we have hit our request limit, safely update the database
         elif response.status_code == 429:
             self.to_database()
 
@@ -49,7 +48,7 @@ class DataPreprocesser():
 
 
     # Request data from Stratz GraphQL application
-    def request_data_Stratz(self, params, type):
+    def request_data_Stratz(self, params):
         # Info necessary to query
         url = 'https://api.stratz.com/graphql'
         headers = {
@@ -58,100 +57,56 @@ class DataPreprocesser():
             'Content-Type': 'application/json'
         }
 
-        if type == "Match":
-            # Excessive amount of info for now
-            query = """
-            query GetMatchDetails($matchId: Long!) {
-                match(id: $matchId) {
+        query = """
+        query getPlayerDetails($steamAccountId: Long!, $position: [MatchPlayerPositionType]!) {
+            player(steamAccountId: $steamAccountId) {
+                winCount
+                matchCount
+                ranks{
+                    rank
+                    seasonRankId
+                }
+                matches(request: {isParsed: true, positionIds: $position, lobbyTypeIds: 7, take: 50}) {
                     id
                     didRadiantWin
-                    durationSeconds
-                    towerStatusRadiant
-                    towerStatusDire
-                    barracksStatusRadiant
-                    barracksStatusDire
-                    gameMode
-                    radiantKills
-                    direKills
-                    gameVersionId
-                    firstBloodTime
-                    players {
+                    players(steamAccountId: $steamAccountId) {
                         steamAccountId
-                        heroId
-                        position
-                        numDenies
-                        numLastHits
+                        isRadiant
                         position
                         kills
                         deaths
                         assists
                         networth
                         goldPerMinute
+                        gold
+                        numLastHits
+                        numDenies
                         experiencePerMinute
-                        heroDamage
                         towerDamage
+                        heroDamage
                         heroHealing
-                        isRadiant
+                        isVictory
+                        leaverStatus
                         imp
-                    }
-                }
-            }
-            """
-            variables = {
-                "matchId": int(params['matchId'])
-            }
-
-        elif type == 'PlayerInfo':
-            query = """
-            query getPlayerDetails($steamAccountId: Long!, $position: [MatchPlayerPositionType]!) {
-                player(steamAccountId: $steamAccountId) {
-                    winCount
-                    matchCount
-                    ranks{
-                        rank
-                        seasonRankId
-                    }
-                    matches(request: {isParsed: true, positionIds: $position, lobbyTypeIds: 7, take: 50}) {
-                        id
-                        didRadiantWin
-                        players(steamAccountId: $steamAccountId) {
-                            steamAccountId
-                            isRadiant
-                            position
-                            kills
-                            deaths
-                            assists
-                            networth
-                            goldPerMinute
-                            gold
-                            numLastHits
-                            numDenies
-                            experiencePerMinute
-                            towerDamage
-                            heroDamage
-                            heroHealing
-                            isVictory
-                            leaverStatus
-                            imp
-                            stats {
-                                campStack
-                                wards {
-                                    type
-                                }
-                                wardDestruction {
-                                    isWard
-                                }
+                        stats {
+                            campStack
+                            wards {
+                                type
+                            }
+                            wardDestruction {
+                                isWard
                             }
                         }
                     }
                 }
             }
-            """
+        }
+        """
 
-            variables = {
-                "steamAccountId": int(params['steamAccountId']),
-                "position": params['position']
-            }
+        variables = {
+            "steamAccountId": int(params['steamAccountId']),
+            "position": params['position']
+        }
 
         response = requests.post(url, json={'query': query, 'variables': variables}, headers=headers)
 
@@ -186,12 +141,16 @@ class DataPreprocesser():
             else:
                 curr_team_radiant = 0
 
-            recent_matches = self.request_data_Stratz(params={'steamAccountId': player_id, 'position': position}, type = "PlayerInfo")
+            recent_matches = self.request_data_Stratz(params={'steamAccountId': player_id, 'position': position})
             recent_matches = recent_matches['data']['player']
 
             # Easily accessible stats
-            player_stats['account_id'] = player_id
+            if player_id is not None:
+                player_stats['account_id'] = player_id
+            else:
+                player_stats['account_id'] = np.NaN
             player_stats['win_rate'] = recent_matches['winCount'] / recent_matches['matchCount']  # Calculate Lifetime win/loss percent
+            player_stats['match_id'] = match['match_id']
 
             # Since Stratz can sometimes not return a rank
             if not (recent_matches['ranks'] == None or recent_matches['ranks'] == []):
@@ -241,7 +200,7 @@ class DataPreprocesser():
                         main_camp_stacks = np.append(main_camp_stacks, 0)
 
                 params = {'steamAccountId': player_id, 'position': ["POSITION_1", "POSITION_2", "POSITION_3", "POSITION_4", "POSITION_5"]}  # Use all positions this time
-                recent_matches = self.request_data_Stratz(params=params, type = "PlayerInfo")  # Run query again across all matches regardless of role
+                recent_matches = self.request_data_Stratz(params=params)  # Run query again across all matches regardless of role
                 recent_matches = recent_matches['data']['player']
 
             # Find statistics from last 50 matches
@@ -456,7 +415,7 @@ class DataPreprocesser():
                 
         
         # Don't have enough players to analyze, try a new match
-        if len(player_list) <= 5:
+        if len(player_list) <= 7:
             return 0
         
         player_list = self.process_player_info(player_list, match)
@@ -471,7 +430,6 @@ class DataPreprocesser():
 
         # Process each match individually
         for match in new_matches:
-
             # Check if we have a duplicate match id, if we do, skip it
             is_duplicate = self.check_duplicate(match['match_id'])
             if is_duplicate == 1:
@@ -513,6 +471,8 @@ class DataPreprocesser():
             curr_players = players
             res = self.process_players(curr_match, curr_players)
 
+            # damage,damage_taken,rune_pickups,obs_placed,sen_placed,name
+
             # If we found that there are not enough players to analyze, skip this match
             if res == 0:
                 continue
@@ -521,6 +481,7 @@ class DataPreprocesser():
             temp_dict = players
             temp_df = pd.DataFrame(temp_dict)
             self.player_stats_match = pd.concat([temp_df, self.player_stats_match], ignore_index=True)
+
             temp_match_df = pd.DataFrame([curr_match])
             self.matches = pd.concat([temp_match_df, self.matches], ignore_index=True)
 
@@ -574,12 +535,24 @@ class DataPreprocesser():
 
     # Keeps the keys that we want to analyze, can edit
     def clean_players(self, players):
-        keys = ['match_id', 'player_slot', 'account_id', 'assists', 'camps_stacked', 'damage', 'damage_taken', 'deaths', 'denies', 'gold_perm_min', 'hero_damage', 'hero_healing',
+        keys = ['match_id', 'player_slot', 'account_id', 'assists', 'camps_stacked', 'damage_taken', 'deaths', 'denies', 'gold_perm_min', 'hero_damage', 'hero_healing',
                 'hero_id', 'kills', 'team_slot', 'last_hits', 'leaver_status', 'rune_pickups', 'obs_placed', 'sen_placed', 'tower_damaged', 'xp_per_min', 'isRadiant', 'total_gold', 'kda', 'rank_tier']
         
         new_player_list = []
         for player in players:
-            new_player = {key: player[key] for key in keys if key in player}
+            new_player = {}
+            for key in keys:
+                if key in player:
+                    new_player[key] = player[key]
+
+                    # Since it is a dict
+                    if key == 'damage_taken':
+                        new_player[key] = np.sum(np.array(list(player[key].values())))
+                
+                # Missing Data, handle with np.NaN
+                elif key not in player and not(key == 'account_id'):
+                    new_player[key] = np.NaN
+
             new_player_list.append(new_player)
 
         return new_player_list
@@ -588,11 +561,11 @@ class DataPreprocesser():
     # Add to the database of players and matches
     def to_database(self):
         print("Sending to database")
-        print(self.players)
+        self.players.to_csv('testplayers.csv')
         self.players.to_sql("Players", self.connection, if_exists='append', index=False)
-        print(self.matches)
+        self.matches.to_csv('testmatches.csv')
         self.matches.to_sql("Matches", self.connection, if_exists='append', index=False)
-        print(self.player_stats_match)
+        self.player_stats_match.to_csv('testplayer_stats_match.csv', index=False)
         self.player_stats_match.to_sql("PlayerStatsMatch", self.connection, if_exists='append', index=False)
 
 
@@ -617,6 +590,7 @@ class DataPreprocesser():
     def clean(self):
         self.players = self.players.drop_duplicates()
         self.matches = self.matches.drop_duplicates()
+        self.player_stats_match = self.player_stats_match.drop_duplicates()
 
     
     def check_duplicate(self, match_id) -> int:
