@@ -12,3 +12,5 @@ Future Tasks:
 # Data Processing
 Using the Open DOTA REST API and Stratz API GraphQL Application, creating my own dataset to use
 Handling missing data, preprocessing, and feature engineering
+
+Storing data in an SQLite database for convenience and lightweight use
