@@ -17,7 +17,6 @@ class DataPreprocesser():
         self.cursor = cursor
 
         # For data for the model
-        self.data = pd.DataFrame()
         self.matches = pd.DataFrame()
         self.players = pd.DataFrame()
         self.player_stats_match = pd.DataFrame()
@@ -593,6 +592,7 @@ class DataPreprocesser():
         self.player_stats_match = self.player_stats_match.drop_duplicates()
 
     
+    # Check if we have used this match id before
     def check_duplicate(self, match_id) -> int:
         # Empty dataframe can't have duplicates
         if self.matches.empty == True:
@@ -606,4 +606,29 @@ class DataPreprocesser():
 
     # Merge Data into the format that I need and return it
     def merge_data(self):
-        pass
+        data = pd.DataFrame()
+
+        self.clean()  # Before starting, clean the data
+
+        print(f"Total number of matches available: {self.matches.shape[0]}")
+
+        # Loop through every match
+        for index in self.matches.index:
+            temp_match = self.matches.loc[[index, ['radiant_win', 'match_id']]]  # Select a single row from the dataframe
+            match_id = (temp_match['match_id'].values)[0]  # Get the match_id value
+
+            #temp_match = pd.concat([temp_match['match_id'], temp_match['radiant_win']], axis=1)  # Since we only predict the win for now and need the match_id for pd.merge()
+            
+            # Get the players for this match into a dataframe of one row
+            temp_players = self.players[self.players['match_id'] == match_id]  # Get all rows where a player appreared in this match
+            temp_players = temp_players[temp_players['match_id'] != match_id]  # Since we do not want 10 of this one column
+            temp_players = temp_players.unstack().to_frame().T  # Flatten dataframe
+            temp_players['match_id'] = match_id  # Add back one instance of match_id for joining
+
+            temp_data = pd.merge(temp_match, temp_players, on='match_id')  # Get a temporary data row
+
+            data = pd.concat([data, temp_data], axis=0)  # Add to the returning dataframe
+
+        data.to_csv('test_data.csv')  # For verification; DELETE LATER
+
+        return data
