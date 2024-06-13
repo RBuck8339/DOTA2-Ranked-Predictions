@@ -6,9 +6,7 @@ import time  # Just so that we don't go over allowed calls per minute
 
 
 OPEN_DOTA_URL = f'https://api.opendota.com/api/'
-
 STRATZ_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJTdWJqZWN0IjoiZTg0ZjQ3ZDMtMjViZC00MWFjLTk5MDEtODc4M2U1OTg1ZjY2IiwiU3RlYW1JZCI6IjExNTUxNTk3OTIiLCJuYmYiOjE3MTY4NzEzODEsImV4cCI6MTc0ODQwNzM4MSwiaWF0IjoxNzE2ODcxMzgxLCJpc3MiOiJodHRwczovL2FwaS5zdHJhdHouY29tIn0.V9os4YLxMhMI7f5PFZgObBJsoMrLUkmKjv2DxN4SvOg'
-STRATZ_GRAPHQL = 'https://api.stratz.com/graphiql/'
 
 # Class used to generate, clean, and retrieve information related to DOTA2 ranked matches
 class DataPreprocesser():
@@ -332,9 +330,6 @@ class DataPreprocesser():
                 player_stats['recent_times_left'] = (recent_leaver.count(1) / len(recent_leaver))
                 player_stats['curr_team_wl_rate'] = curr_team_wl.count(1) / (curr_team_wl.count(1) + curr_team_wl.count(0))
 
-            temp_df = pd.DataFrame([player_stats])
-            self.players = pd.concat([self.players, temp_df], ignore_index=True)
-
             player_list.append(player_stats)
 
         return player_list
@@ -396,8 +391,9 @@ class DataPreprocesser():
             player_stats['recent_times_left'] = 0.0
             player_stats['curr_team_wl_rate'] = 0.50
 
-            temp_df = pd.DataFrame([player_stats])
-            self.players = pd.concat([self.players, temp_df], ignore_index=True)
+            players.append(player_stats)
+
+        return players
 
 
     # Find all players previous match statistics
@@ -420,7 +416,10 @@ class DataPreprocesser():
             return 0
         
         player_list = self.process_player_info(player_list, match)
-        self.process_anon_player(player_list, anon_players, match)
+        player_list = self.process_anon_player(player_list, anon_players, match)
+
+        temp_df = pd.DataFrame(player_list)
+        self.players = pd.concat([self.players, temp_df], ignore_index=True)
 
         return 1  # Enough players to do this
             
