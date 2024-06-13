@@ -1,6 +1,7 @@
 import requests
 import pandas as pd
 import numpy as np
+from sys import exit
 import time  # Just so that we don't go over allowed calls per minute
 
 
@@ -40,6 +41,7 @@ class DataPreprocesser():
         # If we have hit our request limit, safely update the database
         elif response.status_code == 429:
             self.to_database()
+            exit()  # Safely exit the program
 
         else:
             print(f"Error: {response.status_code}")
@@ -115,7 +117,7 @@ class DataPreprocesser():
         # If we have hit our request limit, update the database
         elif response.status_code == 429:
             self.to_database()
-            return None
+            exit()  # Safely exit the program
 
         else:
             print(f"Error fetching match details from Stratz: {response.status_code}")
