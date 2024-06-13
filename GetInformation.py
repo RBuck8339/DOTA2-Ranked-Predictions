@@ -13,8 +13,7 @@ cursor = connection.cursor()
 '''# While verifying everything works
 cursor.execute('DROP TABLE IF EXISTS Matches')
 cursor.execute('DROP TABLE IF EXISTS Players')
-cursor.execute('DROP TABLE IF EXISTS PlayerStatsMatch')
-'''
+cursor.execute('DROP TABLE IF EXISTS PlayerStatsMatch')'''
 
 
 MyProcesser = DataPreprocesser(connection, cursor)

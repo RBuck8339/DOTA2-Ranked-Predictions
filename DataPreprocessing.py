@@ -20,7 +20,8 @@ class DataPreprocesser():
         self.players = pd.DataFrame()
         self.player_stats_match = pd.DataFrame()
 
-        self.to_dataframes()
+        #self.matches_processed = []
+        self.matches_processed = list(pd.read_sql_query("SELECT match_id FROM Matches", connection).values)
 
     
     # Request data from the Open Dota REST API
@@ -426,76 +427,71 @@ class DataPreprocesser():
 
     # Generate a set of new matches and find info about the players
     def match_info(self) -> None:
-        new_matches = self.request_data_OpenDota(OPEN_DOTA_URL + '/publicMatches', params={"min_rank": 70}) # A list of 100 matches
+        while True:
+            new_matches = self.request_data_OpenDota(OPEN_DOTA_URL + '/publicMatches', params={"min_rank": 70}) # A list of 100 matches
 
-        # Process each match individually
-        for match in new_matches:
-            # Check if we have a duplicate match id, if we do, skip it
-            is_duplicate = self.check_duplicate(match['match_id'])
-            if is_duplicate == 1:
-                continue
+            # Process each match individually
+            for match in new_matches:
+                # Check if we have a duplicate match id, if we do, skip it
+                is_duplicate = self.check_duplicate(match['match_id'])
+                if is_duplicate == 1:
+                    continue
 
-            # If this is not a ranked match, don't analyze it
-            if match['lobby_type'] != 7:
-                continue
+                # If this is not a ranked match, don't analyze it
+                if match['lobby_type'] != 7:
+                    continue
 
-            curr_match = self.request_data_OpenDota(OPEN_DOTA_URL + '/matches/' + str(match['match_id']), None)
+                curr_match = self.request_data_OpenDota(OPEN_DOTA_URL + '/matches/' + str(match['match_id']), None)
 
-            curr_match, players = self.clean_match(curr_match)
+                curr_match, players = self.clean_match(curr_match)
 
-            curr_match['averageRank'] = match['avg_rank_tier']
+                curr_match['averageRank'] = match['avg_rank_tier']
 
-            # Prepare players for future analysis (not current task)
-            players_to_add = []
-            for player in players:
-                player['matchId'] = curr_match['match_id']
+                # Prepare players for future analysis (not current task)
+                players_to_add = []
+                for player in players:
+                    player['matchId'] = curr_match['match_id']
+                    
+                    player['position'] = (player['team_slot'] % 128) + 1
+
+                    players_to_add.append(player)
+
+                    # Add heros to match data for later analysis
+                    if player['isRadiant'] == True:
+                        curr_match['Radiant_' + 'Position' + str(player['position']) + '_hero'] = player['hero_id']
+                        if player.get('account_id') is not None:
+                            curr_match['Radiant_' + 'Position_' + str(player['position']) + 'id'] = player['account_id']
+                        else:
+                            curr_match['Radiant_' + 'Position_' + str(player['position']) + 'id'] = np.NaN
+                    elif player['isRadiant'] == False:
+                        curr_match['Dire_' + 'Position' + str(player['position']) + '_hero'] = player['hero_id']
+                        if player.get('account_id') is not None:
+                            curr_match['Dire_' + 'Position_' + str(player['position']) + 'id'] = player['account_id']
+                        else:
+                            curr_match['Dire_' + 'Position_' + str(player['position']) + 'id'] = np.NaN
+
+                curr_players = players
+                res = self.process_players(curr_match, curr_players)
+
+                # damage,damage_taken,rune_pickups,obs_placed,sen_placed,name
+
+                # If we found that there are not enough players to analyze, skip this match
+                if res == 0:
+                    continue
                 
-                player['position'] = (player['team_slot'] % 128) + 1
+                # Add to the dataframes
+                temp_dict = players
+                for row in temp_dict:
+                    row['match_id'] = match['match_id']
 
-                players_to_add.append(player)
+                temp_df = pd.DataFrame(temp_dict)
+                self.player_stats_match = pd.concat([temp_df, self.player_stats_match], ignore_index=True)
 
-                # Add heros to match data for later analysis
-                if player['isRadiant'] == True:
-                    curr_match['Radiant_' + 'Position' + str(player['position']) + '_hero'] = player['hero_id']
-                    if player.get('account_id') is not None:
-                        curr_match['Radiant_' + 'Position_' + str(player['position']) + 'id'] = player['account_id']
-                    else:
-                        curr_match['Radiant_' + 'Position_' + str(player['position']) + 'id'] = np.NaN
-                elif player['isRadiant'] == False:
-                    curr_match['Dire_' + 'Position' + str(player['position']) + '_hero'] = player['hero_id']
-                    if player.get('account_id') is not None:
-                        curr_match['Dire_' + 'Position_' + str(player['position']) + 'id'] = player['account_id']
-                    else:
-                        curr_match['Dire_' + 'Position_' + str(player['position']) + 'id'] = np.NaN
+                temp_match_df = pd.DataFrame([curr_match])
+                self.matches = pd.concat([temp_match_df, self.matches], ignore_index=True)
 
-            curr_players = players
-            res = self.process_players(curr_match, curr_players)
-
-            # damage,damage_taken,rune_pickups,obs_placed,sen_placed,name
-
-            # If we found that there are not enough players to analyze, skip this match
-            if res == 0:
-                continue
-            
-            # Add to the dataframes
-            temp_dict = players
-            for row in temp_dict:
-                row['match_id'] = match['match_id']
-
-            temp_df = pd.DataFrame(temp_dict)
-            self.player_stats_match = pd.concat([temp_df, self.player_stats_match], ignore_index=True)
-
-            temp_match_df = pd.DataFrame([curr_match])
-            self.matches = pd.concat([temp_match_df, self.matches], ignore_index=True)
-
-            print(f'Current number of matches processed: {(self.matches.shape)[0]}')
-            print(f'Current number of players processed: {(self.players.shape)[0]}')
-
-        self.to_database()
-
-        # This should be the fix for repeating
-        #self.to_dataframes()
-        #self.match_info()  # Repeat
+                print(f'Current number of matches processed: {(self.matches.shape)[0]}')
+                print(f'Current number of players processed: {(self.players.shape)[0]}')
 
 
     # Keeps the keys that we wnat to analyze, can edit
@@ -566,12 +562,20 @@ class DataPreprocesser():
     # Add to the database of players and matches
     def to_database(self):
         print("Sending to database")
-        self.players.to_csv('testplayers.csv')
+        print(f'new shape for players {self.players.shape}')
         self.players.to_sql("Players", self.connection, if_exists='append', index=False)
-        self.matches.to_csv('testmatches.csv')
+        print(f'new shape for matches: {self.matches.shape}')
         self.matches.to_sql("Matches", self.connection, if_exists='append', index=False)
-        self.player_stats_match.to_csv('testplayer_stats_match.csv', index=False)
+        print(f'new playerstatsmatch shape: {self.player_stats_match.shape}')
         self.player_stats_match.to_sql("PlayerStatsMatch", self.connection, if_exists='append', index=False)
+
+        # Verification
+        self.to_dataframes()
+
+        self.matches.to_csv('testmatches.csv')
+        self.players.to_csv('testplayers.csv')
+        self.player_stats_match.to_csv('testplayer_stats_match.csv', index=False)
+
 
 
     # If the database exists and has enough records
@@ -580,11 +584,17 @@ class DataPreprocesser():
 
         self.players = pd.read_sql_query(query, self.connection)
 
+        print(f'Players shape: {self.players.shape}')
+
         query = "SELECT * FROM Matches"
         self.matches = pd.read_sql_query(query, self.connection)
 
+        print(f'Matches shape: {self.matches.shape}')
+
         query = "SELECT * FROM PlayerStatsMatch"
         self.player_stats_match = pd.read_sql_query(query, self.connection)
+
+        print(f'playerstatsmatch shape: {self.player_stats_match.shape}')
 
         self.clean()
 
@@ -593,6 +603,7 @@ class DataPreprocesser():
     def clean(self):
         # Since account_id may be NaN value
         nan_rows = self.players[self.players['account_id'].isna()]
+        
         non_nan_rows = self.players.dropna(subset=['account_id']).drop_duplicates(subset=['account_id', 'match_id'])
         self.players = pd.concat([non_nan_rows, nan_rows], ignore_index=True)
         
@@ -604,12 +615,14 @@ class DataPreprocesser():
     def check_duplicate(self, match_id) -> int:
         # Empty dataframe can't have duplicates
         if self.matches.empty == True:
+            self.matches_processed.append(match_id)
             return 0
         
         all_ids = self.matches.loc[:, 'match_id'].values  # Get every match id
         if match_id in all_ids:
             return 1
         
+        self.matches_processed.append(match_id)
         return 0  # Not a duplicate match_id
 
     # Merge Data into the format that I need and return it
