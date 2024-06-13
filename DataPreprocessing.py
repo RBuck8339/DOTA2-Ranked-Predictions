@@ -20,7 +20,6 @@ class DataPreprocesser():
         self.players = pd.DataFrame()
         self.player_stats_match = pd.DataFrame()
 
-        #self.matches_processed = []
         self.matches_processed = list(pd.read_sql_query("SELECT match_id FROM Matches", connection).values)
 
     
@@ -39,12 +38,14 @@ class DataPreprocesser():
         
         # If we have hit our request limit, safely update the database
         elif response.status_code == 429:
+            print(f'Hit request limit from Open Dota!')
             self.to_database()
             exit()  # Safely exit the program
 
         else:
-            print(f"Error: {response.status_code}")
-            return None
+            print(f"Error from Open Dota: {response.status_code}")
+            self.to_database()
+            exit()  # Safely exit the program
 
 
     # Request data from Stratz GraphQL application
@@ -115,12 +116,14 @@ class DataPreprocesser():
         
         # If we have hit our request limit, update the database
         elif response.status_code == 429:
+            print(f'Hit request limit from Stratz!')
             self.to_database()
             exit()  # Safely exit the program
 
         else:
             print(f"Error fetching match details from Stratz: {response.status_code}")
-            return None
+            self.to_database()
+            exit()  # Safely exit the program
 
     # Calculate player stats
     # Thinking of adding: 
@@ -562,11 +565,9 @@ class DataPreprocesser():
     # Add to the database of players and matches
     def to_database(self):
         print("Sending to database")
-        print(f'new shape for players {self.players.shape}')
+
         self.players.to_sql("Players", self.connection, if_exists='append', index=False)
-        print(f'new shape for matches: {self.matches.shape}')
         self.matches.to_sql("Matches", self.connection, if_exists='append', index=False)
-        print(f'new playerstatsmatch shape: {self.player_stats_match.shape}')
         self.player_stats_match.to_sql("PlayerStatsMatch", self.connection, if_exists='append', index=False)
 
         # Verification
@@ -581,20 +582,13 @@ class DataPreprocesser():
     # If the database exists and has enough records
     def to_dataframes(self):
         query = "SELECT * FROM Players"
-
         self.players = pd.read_sql_query(query, self.connection)
-
-        print(f'Players shape: {self.players.shape}')
 
         query = "SELECT * FROM Matches"
         self.matches = pd.read_sql_query(query, self.connection)
 
-        print(f'Matches shape: {self.matches.shape}')
-
         query = "SELECT * FROM PlayerStatsMatch"
         self.player_stats_match = pd.read_sql_query(query, self.connection)
-
-        print(f'playerstatsmatch shape: {self.player_stats_match.shape}')
 
         self.clean()
 
@@ -629,6 +623,7 @@ class DataPreprocesser():
     def merge_data(self):
         data = pd.DataFrame()
 
+        self.to_dataframes()
         self.clean()  # Before starting, clean the data
 
         print(f"Total number of matches available: {self.matches.shape[0]}")
