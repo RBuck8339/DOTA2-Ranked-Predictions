@@ -478,6 +478,9 @@ class DataPreprocesser():
             
             # Add to the dataframes
             temp_dict = players
+            for row in temp_dict:
+                row['match_id'] = match['match_id']
+
             temp_df = pd.DataFrame(temp_dict)
             self.player_stats_match = pd.concat([temp_df, self.player_stats_match], ignore_index=True)
 
@@ -489,7 +492,9 @@ class DataPreprocesser():
 
         self.to_database()
 
-        self.match_info()  # Repeat
+        # This should be the fix for repeating
+        #self.to_dataframes()
+        #self.match_info()  # Repeat
 
 
     # Keeps the keys that we wnat to analyze, can edit
@@ -570,26 +575,28 @@ class DataPreprocesser():
 
     # If the database exists and has enough records
     def to_dataframes(self):
-        table_name = 'Players'
-        query = f"""
-            SELECT name 
-            FROM sqlite_master 
-            WHERE type='table' AND name='{table_name}';
-        """
+        query = "SELECT * FROM Players"
+
         self.players = pd.read_sql_query(query, self.connection)
 
-        table_name = 'Matches'
+        query = "SELECT * FROM Matches"
         self.matches = pd.read_sql_query(query, self.connection)
 
-        table_name = 'PlayerStatsMatch'
+        query = "SELECT * FROM PlayerStatsMatch"
         self.player_stats_match = pd.read_sql_query(query, self.connection)
+
+        self.clean()
 
     
     # Clean up the dataframes before providing as input to model
     def clean(self):
-        self.players = self.players.drop_duplicates()
-        self.matches = self.matches.drop_duplicates()
-        self.player_stats_match = self.player_stats_match.drop_duplicates()
+        # Since account_id may be NaN value
+        nan_rows = self.players[self.players['account_id'].isna()]
+        non_nan_rows = self.players.dropna(subset=['account_id']).drop_duplicates(subset=['account_id', 'match_id'])
+        self.players = pd.concat([non_nan_rows, nan_rows], ignore_index=True)
+        
+        self.matches = self.matches.drop_duplicates(subset=['match_id'])
+        self.player_stats_match = self.player_stats_match.drop_duplicates(subset=['match_id', 'account_id'])
 
     
     # Check if we have used this match id before
@@ -623,6 +630,7 @@ class DataPreprocesser():
             temp_players = self.players[self.players['match_id'] == match_id]  # Get all rows where a player appreared in this match
             temp_players = temp_players[temp_players['match_id'] != match_id]  # Since we do not want 10 of this one column
             temp_players = temp_players.unstack().to_frame().T  # Flatten dataframe
+            # Assign column names here, its a weird loop
             temp_players['match_id'] = match_id  # Add back one instance of match_id for joining
 
             temp_data = pd.merge(temp_match, temp_players, on='match_id')  # Get a temporary data row
