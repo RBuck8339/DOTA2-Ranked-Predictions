@@ -1,8 +1,9 @@
 import requests
 import pandas as pd
 import numpy as np
+
 from sys import exit
-import time  # Just so that we don't go over allowed calls per minute
+from time import sleep  # Just so that we don't go over allowed calls per minute
 
 
 OPEN_DOTA_URL = f'https://api.opendota.com/api/'
@@ -495,6 +496,8 @@ class DataPreprocesser():
 
                 print(f'Current number of matches processed: {(self.matches.shape)[0]}')
                 print(f'Current number of players processed: {(self.players.shape)[0]}')
+            
+            sleep(45)  # Sleep for a small time to prevent hitting request limit
 
 
     # Keeps the keys that we wnat to analyze, can edit
@@ -573,6 +576,7 @@ class DataPreprocesser():
         # Verification
         self.to_dataframes()
 
+        print(f"Total number of matches processed: {self.matches.shape[0]}")
         self.matches.to_csv('testmatches.csv')
         self.players.to_csv('testplayers.csv')
         self.player_stats_match.to_csv('testplayer_stats_match.csv', index=False)

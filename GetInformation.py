@@ -17,4 +17,10 @@ cursor.execute('DROP TABLE IF EXISTS PlayerStatsMatch')'''
 
 
 MyProcesser = DataPreprocesser(connection, cursor)
-DataPreprocesser.match_info(MyProcesser)
+
+# In order to allow for exiting the program early if needed
+try:
+    DataPreprocesser.match_info(MyProcesser)
+
+except KeyboardInterrupt:
+    DataPreprocesser.to_database(MyProcesser)
