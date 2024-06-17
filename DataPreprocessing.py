@@ -41,11 +41,13 @@ class DataPreprocesser():
         elif response.status_code == 429:
             print(f'Hit request limit from Open Dota!')
             self.to_database()
+            self.connection.close()
             exit()  # Safely exit the program
 
         else:
             print(f"Error from Open Dota: {response.status_code}")
             self.to_database()
+            self.connection.close()
             exit()  # Safely exit the program
 
 
@@ -119,11 +121,13 @@ class DataPreprocesser():
         elif response.status_code == 429:
             print(f'Hit request limit from Stratz!')
             self.to_database()
+            self.connection.close()
             exit()  # Safely exit the program
 
         else:
             print(f"Error fetching match details from Stratz: {response.status_code}")
             self.to_database()
+            self.connection.close()
             exit()  # Safely exit the program
 
     # Calculate player stats
@@ -497,7 +501,7 @@ class DataPreprocesser():
                 print(f'Current number of matches processed: {(self.matches.shape)[0]}')
                 print(f'Current number of players processed: {(self.players.shape)[0]}')
             
-            sleep(45)  # Sleep for a small time to prevent hitting request limit
+            sleep(60)  # Sleep for a small time to prevent hitting request limit
 
 
     # Keeps the keys that we wnat to analyze, can edit
@@ -577,10 +581,6 @@ class DataPreprocesser():
         self.to_dataframes()
 
         print(f"Total number of matches processed: {self.matches.shape[0]}")
-        self.matches.to_csv('testmatches.csv')
-        self.players.to_csv('testplayers.csv')
-        self.player_stats_match.to_csv('testplayer_stats_match.csv', index=False)
-
 
 
     # If the database exists and has enough records
