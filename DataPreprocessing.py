@@ -501,7 +501,7 @@ class DataPreprocesser():
                 print(f'Current number of matches processed: {(self.matches.shape)[0]}')
                 print(f'Current number of players processed: {(self.players.shape)[0]}')
             
-            sleep(60)  # Sleep for a small time to prevent hitting request limit
+            sleep(1000)  # Sleep for a small time to prevent hitting request limit
 
 
     # Keeps the keys that we wnat to analyze, can edit
@@ -633,16 +633,17 @@ class DataPreprocesser():
         print(f"Total number of matches available: {self.matches.shape[0]}")
 
         # Loop through every match
-        for index in self.matches.index:
-            temp_match = self.matches.loc[[index, ['radiant_win', 'match_id']]]  # Select a single row from the dataframe
+        for index, row in self.matches.iterrows():
+            temp_match = row[['radiant_win', 'match_id']].to_frame().T  # Select a single row from the dataframe
             match_id = (temp_match['match_id'].values)[0]  # Get the match_id value
 
             #temp_match = pd.concat([temp_match['match_id'], temp_match['radiant_win']], axis=1)  # Since we only predict the win for now and need the match_id for pd.merge()
             
             # Get the players for this match into a dataframe of one row
             temp_players = self.players[self.players['match_id'] == match_id]  # Get all rows where a player appreared in this match
-            temp_players = temp_players[temp_players['match_id'] != match_id]  # Since we do not want 10 of this one column
-            temp_players = temp_players.unstack().to_frame().T  # Flatten dataframe
+            temp_players = temp_players.drop(columns=['match_id'])  # Since we do not want 10 of this one column
+            temp_players = temp_players.reset_index(drop=True).T.reset_index(drop=True).T  # Flatten dataframe
+            
             # Assign column names here, its a weird loop
             temp_players['match_id'] = match_id  # Add back one instance of match_id for joining
 
