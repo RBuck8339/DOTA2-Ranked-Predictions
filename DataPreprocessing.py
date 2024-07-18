@@ -637,32 +637,26 @@ class DataPreprocesser():
 
         print(f"Total number of matches available: {self.matches.shape[0]}")
         
-        player_id_keys = ['Radiant_Position_1id', 'Radiant_Position_2id', 'Radiant_Position_3id', 'Radiant_Position_4id', 'Radiant_Position_5id', 'Dire_Position_1id', 'Dire_Position_2id', 'Dire_Position_3id', 'Dire_Position_4id', 'Dire_Position_5id']
-
         # Loop through every match
         for index, row in self.matches.iterrows():
             temp_match = row[['radiant_win', 'match_id']].to_frame().T  # Select a single row from the dataframe
             match_id = (temp_match['match_id'].values)[0]  # Get the match_id value
-            
-            players_in_match = row[player_id_keys]
-            print(players_in_match)  # Verificiation
 
-            #temp_match = pd.concat([temp_match['match_id'], temp_match['radiant_win']], axis=1)  # Since we only predict the win for now and need the match_id for pd.merge()
-            
             # Get the players for this match into a dataframe of one row
             temp_players = self.players[self.players['match_id'] == match_id]  # Get all rows where a player appreared in this match
             temp_players = temp_players.drop(columns=['match_id'])  # Since we do not want 10 of this one column
-            
-            print(temp_players.columns)
-            
             temp_players = temp_players.reset_index(drop=True).T.reset_index(drop=True)  # Flatten dataframe
-            
-            # Assign column names here, its a weird loop
-            temp_players['match_id'] = match_id  # Add back one instance of match_id for joining
 
-            temp_data = pd.merge(temp_match, temp_players, on='match_id')  # Get a temporary data row
+            temp_data = pd.concat([temp_match, temp_players], axis=1)  # Get a temporary data row
 
             data = pd.concat([data, temp_data], axis=0)  # Add to the returning dataframe
+
+        # Generate new column names for the new dataframe
+        column_prefixes = ['Radiant_Position_1_', 'Radiant_Position_2_', 'Radiant_Position_3_', 'Radiant_Position_4_', 'Radiant_Position_5_', 'Dire_Position_1_', 'Dire_Position_2_', 'Dire_Position_3_', 'Dire_Position_4_', 'Dire_Position_5_']
+        new_columns = []
+        for column_prefix in column_prefixes:
+            for column in self.players.columns:
+                new_columns.append(column_prefix + column)
 
         data.to_csv('test_data.csv')  # For verification; DELETE LATER
 

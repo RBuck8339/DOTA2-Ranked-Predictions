@@ -1,9 +1,12 @@
+Currently not writing code for model since I am still collecting data. In the meantime, check out other projects I am working on
+
+
 # Project Goal
 Create my own dataset using REST API and GraphQL calls that I can use in machine learning tasks.
 Focused around the popular videogame DOTA 2
 
 Current Tasks:
-- Binary Classification of which team will win a match given the stats for 10 players
+- Binary Classification of which team will win a ranked match given the stats for 10 players
 
 Future Tasks:
 - Regression Related tasks involving player performance

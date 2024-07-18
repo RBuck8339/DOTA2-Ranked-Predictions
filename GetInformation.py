@@ -12,7 +12,7 @@ cursor = connection.cursor()
 MyProcesser = DataPreprocesser(connection, cursor)
 
 # In order to allow for exiting the program early if needed
-try:
+try: 
     DataPreprocesser.match_info(MyProcesser)
 
 except KeyboardInterrupt:
