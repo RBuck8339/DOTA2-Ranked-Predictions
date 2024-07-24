@@ -606,12 +606,27 @@ class DataPreprocesser():
     def clean(self):
         # Since account_id may be NaN value
         nan_rows = self.players[self.players['account_id'].isna()]
-        
         non_nan_rows = self.players.dropna(subset=['account_id']).drop_duplicates(subset=['account_id', 'match_id'])
+        
+        # If we have too many anonymous player rows
+        if(10 - nan_rows.shape[0] < non_nan_rows.shape[0]):
+            nan_rows = nan_rows.drop_duplicates(keep=(10-non_nan_rows.shape[0]))
+            
+        # If we don't have enough anonymous player rows
+        elif(10 - nan_rows.shape[0] > non_nan_rows.shape[0]):
+            target_num = (10 - nan_rows.shape[0] - non_nan_rows.shape[0])
+            repeats = (target_num // nan_rows.shape[0]) + 1
+            nan_rows = pd.concat([nan_rows] * repeats, ignore_index=True)
+            nan_rows = nan_rows.iloc[:target_num]
+            
         self.players = pd.concat([non_nan_rows, nan_rows], ignore_index=True)
+        self.players.sort_values(by=['match_id'])
         
         self.matches = self.matches.drop_duplicates(subset=['match_id'])
-        self.player_stats_match = self.player_stats_match.drop_duplicates(subset=['match_id', 'account_id'])
+        
+        nan_rows = self.player_stats_match[self.player_stats_match['account_id'].isna()]
+        non_nan_rows = self.player_stats_match.dropna(subset=['account_id']).drop_duplicates(subset=['account_id', 'match_id'])
+        self.player_stats_match = pd.concat([non_nan_rows, nan_rows], ignore_index=True)
 
     
     # Check if we have used this match id before
