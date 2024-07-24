@@ -640,10 +640,12 @@ class DataPreprocesser():
         # Loop through every match
         for index, row in self.matches.iterrows():
             temp_match = row[['radiant_win', 'match_id']].to_frame().T  # Select a single row from the dataframe
+            
             match_id = (temp_match['match_id'].values)[0]  # Get the match_id value
 
             # Get the players for this match into a dataframe of one row
             temp_players = self.players[self.players['match_id'] == match_id]  # Get all rows where a player appreared in this match
+            print(temp_players.shape)
             temp_players = temp_players.drop(columns=['match_id'])  # Since we do not want 10 of this one column
             temp_players = temp_players.reset_index(drop=True).T.reset_index(drop=True)  # Flatten dataframe
 
