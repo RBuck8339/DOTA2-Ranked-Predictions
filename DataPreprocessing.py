@@ -608,14 +608,21 @@ class DataPreprocesser():
     def clean(self):
         self.matches = self.matches.drop_duplicates(subset=['match_id'])
         
+        curr_matches = set()  # For stopping extra players from entering dataframe (temporary fix)
         for idx, row in self.matches.iterrows():
+            if row['match_id'] in curr_matches:
+                continue
+            
             curr_players = self.players[self.players['match_id'] == row['match_id']]
             curr_players = self.adjust_anon(curr_players)
-            print(f'curr_players shape is: {curr_players.shape}')
+            #print(f'curr_players shape is: {curr_players.shape}')
             self.temp_df = pd.concat([self.temp_df, curr_players], ignore_index=True)
-            print(f'self.temp_df shape is: {self.temp_df.shape}')
+            #print(f'self.temp_df shape is: {self.temp_df.shape}')
+            curr_matches.add(row['match_id'])
 
         self.temp_df.to_csv('test_temp.csv')
+        print(f'self.matches shape is: {self.matches.shape}')
+        print(f'self.temp_df shape is: {self.temp_df.shape}')
 
         self.players.sort_values(by=['match_id'])
         
