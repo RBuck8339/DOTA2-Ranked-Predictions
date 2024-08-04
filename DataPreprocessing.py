@@ -20,9 +20,7 @@ class DataPreprocesser():
         self.matches = pd.DataFrame()
         self.players = pd.DataFrame()
         self.player_stats_match = pd.DataFrame()
-
-        self.temp_df = pd.DataFrame()  # For testing
-
+        
         self.matches_processed = list(pd.read_sql_query("SELECT match_id FROM Matches", connection).values)
 
     
@@ -607,24 +605,22 @@ class DataPreprocesser():
     # Clean up the dataframes before providing as input to model
     def clean(self):
         self.matches = self.matches.drop_duplicates(subset=['match_id'])
+        self.matches.sort_values(by=['match_id'])  # For readability
         
+        temp_df = pd.DataFrame()  # For adding player rows to before updating players dataframe
         curr_matches = set()  # For stopping extra players from entering dataframe (temporary fix)
+        
         for idx, row in self.matches.iterrows():
             if row['match_id'] in curr_matches:
                 continue
             
             curr_players = self.players[self.players['match_id'] == row['match_id']]
             curr_players = self.adjust_anon(curr_players)
-            #print(f'curr_players shape is: {curr_players.shape}')
-            self.temp_df = pd.concat([self.temp_df, curr_players], ignore_index=True)
-            #print(f'self.temp_df shape is: {self.temp_df.shape}')
+            temp_df = pd.concat([temp_df, curr_players], ignore_index=True)
             curr_matches.add(row['match_id'])
 
-        self.temp_df.to_csv('test_temp.csv')
-        print(f'self.matches shape is: {self.matches.shape}')
-        print(f'self.temp_df shape is: {self.temp_df.shape}')
-
-        self.players.sort_values(by=['match_id'])
+        self.players = temp_df  
+        self.players.sort_values(by=['match_id'])  # For readability
         
         nan_rows = self.player_stats_match[self.player_stats_match['account_id'].isna()]
         non_nan_rows = self.player_stats_match.dropna(subset=['account_id']).drop_duplicates(subset=['account_id', 'match_id'])
@@ -645,6 +641,7 @@ class DataPreprocesser():
         self.matches_processed.append(match_id)
         return 0  # Not a duplicate match_id
 
+
     # Merge Data into the format that I need and return it
     def merge_data(self):
         data = pd.DataFrame()
@@ -653,30 +650,32 @@ class DataPreprocesser():
         self.clean()  # Before starting, clean the data
 
         print(f"Total number of matches available: {self.matches.shape[0]}")
-        
-        # Loop through every match
-        for index, row in self.matches.iterrows():
-            temp_match = row[['radiant_win', 'match_id']].to_frame().T  # Select a single row from the dataframe
-            
-            match_id = (temp_match['match_id'].values)[0]  # Get the match_id value
 
-            # Get the players for this match into a dataframe of one row
-            temp_players = self.players[self.players['match_id'] == match_id]  # Get all rows where a player appreared in this match
-            print(temp_players.shape)
-            temp_players = temp_players.drop(columns=['match_id'])  # Since we do not want 10 of this one column
-            temp_players = temp_players.reset_index(drop=True).T.reset_index(drop=True)  # Flatten dataframe
-
-            temp_data = pd.concat([temp_match, temp_players], axis=1)  # Get a temporary data row
-
-            data = pd.concat([data, temp_data], axis=0)  # Add to the returning dataframe
-
-        # Generate new column names for the new dataframe
+        # Generate new dataframe
         column_prefixes = ['Radiant_Position_1_', 'Radiant_Position_2_', 'Radiant_Position_3_', 'Radiant_Position_4_', 'Radiant_Position_5_', 'Dire_Position_1_', 'Dire_Position_2_', 'Dire_Position_3_', 'Dire_Position_4_', 'Dire_Position_5_']
-        new_columns = []
-        for column_prefix in column_prefixes:
-            for column in self.players.columns:
-                new_columns.append(column_prefix + column)
-
+        query_columns = ['Radiant_Position_1id', 'Radiant_Position_2id', 'Radiant_Position_3id', 'Radiant_Position_4id', 'Radiant_Position_5id', 'Dire_Position_1id', 'Dire_Position_2id', 'Dire_Position_3id', 'Dire_Position_4id', 'Dire_Position_5id']
+        
+        # Get necessary information for predicting every match
+        for idx, match in self.matches.iterrows():
+            match_id = match['match_id']  # Get the match_id value
+            radiant_win = match['radiant_win']
+            temp_data = pd.DataFrame({'match_id': [match_id], 'radiant_win': [radiant_win]})
+            
+            temp_players = pd.DataFrame()
+            
+            curr_players = self.players[self.players['match_id'] == match_id]
+            curr_players = curr_players.drop(columns=['match_id'])
+            
+            # Loop as a pair, by player positions
+            for query, prefix in zip(query_columns, column_prefixes):
+                new_player = curr_players.loc[((curr_players['match_id'] == match_id) and (curr_players['player_id'] == match[query]))]  # Get the specific player data
+                
+                new_player = new_player.add_prefix(prefix)
+                
+                temp_players.concat([temp_players, new_player], axis = 1)
+            
+            data = pd.concat([data, temp_data], axis=1)
+            
         data.to_csv('test_data.csv')  # For verification; DELETE LATER
 
         return data
