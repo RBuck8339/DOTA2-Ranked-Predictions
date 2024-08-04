@@ -664,17 +664,17 @@ class DataPreprocesser():
             temp_players = pd.DataFrame()
             
             curr_players = self.players[self.players['match_id'] == match_id]
-            curr_players = curr_players.drop(columns=['match_id'])
             
             # Loop as a pair, by player positions
             for query, prefix in zip(query_columns, column_prefixes):
-                new_player = curr_players.loc[((curr_players['match_id'] == match_id) and (curr_players['player_id'] == match[query]))]  # Get the specific player data
+                new_player = curr_players.loc[(curr_players['account_id'] == match[query])]  # Get the specific player data
                 
                 new_player = new_player.add_prefix(prefix)
                 
-                temp_players.concat([temp_players, new_player], axis = 1)
+                temp_players = pd.concat([temp_players, new_player], axis = 1)
             
-            data = pd.concat([data, temp_data], axis=1)
+            temp_data = pd.concat([temp_data, temp_players], axis=1)
+            data = pd.concat([data, temp_data], axis=0)
             
         data.to_csv('test_data.csv')  # For verification; DELETE LATER
 
