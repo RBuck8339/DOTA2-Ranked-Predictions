@@ -669,9 +669,14 @@ class DataPreprocesser():
             for query, prefix in zip(query_columns, column_prefixes):
                 new_player = curr_players.loc[(curr_players['account_id'] == match[query])]  # Get the specific player data
                 
+                # Ease of readability
+                new_player = new_player.drop('account_id', axis=1)
+                new_player = new_player.drop('match_id', axis=1)
                 new_player = new_player.add_prefix(prefix)
                 
                 temp_players = pd.concat([temp_players, new_player], axis = 1)
+                
+                print(temp_players.shape)
             
             temp_data = pd.concat([temp_data, temp_players], axis=1)
             data = pd.concat([data, temp_data], axis=0)
