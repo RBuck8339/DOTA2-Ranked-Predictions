@@ -592,6 +592,7 @@ class DataPreprocesser():
     def to_dataframes(self):
         query = "SELECT * FROM Players"
         self.players = pd.read_sql_query(query, self.connection)
+        self.players.reset_index(drop=True)
 
         query = "SELECT * FROM Matches"
         self.matches = pd.read_sql_query(query, self.connection)
@@ -659,27 +660,33 @@ class DataPreprocesser():
         for idx, match in self.matches.iterrows():
             match_id = match['match_id']  # Get the match_id value
             radiant_win = match['radiant_win']
-            temp_data = pd.DataFrame({'match_id': [match_id], 'radiant_win': [radiant_win]})
-            
-            temp_players = pd.DataFrame()
+            temp_players = pd.DataFrame({'radiant_win': [radiant_win]})  # Start off with the win column
             
             curr_players = self.players[self.players['match_id'] == match_id]
             
             # Loop as a pair, by player positions
             for query, prefix in zip(query_columns, column_prefixes):
-                new_player = curr_players.loc[(curr_players['account_id'] == match[query])]  # Get the specific player data
+                account_id = match[query]  # Get the proper players ID
+                
+                # If NaN, only select one row
+                if pd.notna(account_id):
+                    new_player = curr_players.loc[(curr_players['match_id'] == match_id) & (curr_players['account_id'] == account_id)]
+                else:
+                    new_player = curr_players.loc[(curr_players['match_id'] == match_id) & (curr_players['account_id'].isna())].head(1)
                 
                 # Ease of readability
-                new_player = new_player.drop('account_id', axis=1)
-                new_player = new_player.drop('match_id', axis=1)
+                new_player = new_player.drop(['account_id', 'match_id'], axis=1)
                 new_player = new_player.add_prefix(prefix)
                 
+                print(f'The new player to insert is of shape: {new_player.shape}')
+
                 temp_players = pd.concat([temp_players, new_player], axis = 1)
                 
-                print(temp_players.shape)
+                print(f'Updated temp_players is now of shape: {temp_players.shape}')
+
+            data = pd.concat([data, temp_players], axis=0)
             
-            temp_data = pd.concat([temp_data, temp_players], axis=1)
-            data = pd.concat([data, temp_data], axis=0)
+            print(f'Shape of data is now: {data.shape}')
             
         data.to_csv('test_data.csv')  # For verification; DELETE LATER
 
