@@ -577,12 +577,7 @@ class DataPreprocesser():
         self.matches.to_sql("Matches", self.connection, if_exists='append', index=False)
         self.player_stats_match.to_sql("PlayerStatsMatch", self.connection, if_exists='append', index=False)
 
-        # Verification
-        self.to_dataframes()
-        
-        self.players.to_csv('test.csv')
-        self.matches.to_csv('testmatches.csv')
-        self.player_stats_match.to_csv('testmatchinfo.csv')
+        self.to_dataframes()  # To get shapes of dataframes
 
         print(f"Total number of matches processed: {self.matches.shape[0]}")
         print(f"Total number of players processed: {self.players.shape[0]}")
@@ -637,9 +632,10 @@ class DataPreprocesser():
         
         all_ids = self.matches.loc[:, 'match_id'].values  # Get every match id
         if match_id in all_ids:
-            return 1
+            return 1  # We found a match we have already processed, skip
         
         self.matches_processed.append(match_id)
+        
         return 0  # Not a duplicate match_id
 
 
@@ -686,8 +682,6 @@ class DataPreprocesser():
                     temp_players = pd.concat([temp_players.reset_index(drop=True), new_player.reset_index(drop=True)], axis=1)
                 
             data = pd.concat([data, temp_players], axis=0)
-                        
-        data.to_csv('test_data.csv')  # For verification; DELETE LATER
 
         return data
     
