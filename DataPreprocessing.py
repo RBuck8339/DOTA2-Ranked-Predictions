@@ -653,8 +653,10 @@ class DataPreprocesser():
         print(f"Total number of matches available: {self.matches.shape[0]}")
 
         # Generate new dataframe
-        column_prefixes = ['Radiant_Position_1_', 'Radiant_Position_2_', 'Radiant_Position_3_', 'Radiant_Position_4_', 'Radiant_Position_5_', 'Dire_Position_1_', 'Dire_Position_2_', 'Dire_Position_3_', 'Dire_Position_4_', 'Dire_Position_5_']
-        query_columns = ['Radiant_Position_1id', 'Radiant_Position_2id', 'Radiant_Position_3id', 'Radiant_Position_4id', 'Radiant_Position_5id', 'Dire_Position_1id', 'Dire_Position_2id', 'Dire_Position_3id', 'Dire_Position_4id', 'Dire_Position_5id']
+        column_prefixes = ['Radiant_Position_1_', 'Radiant_Position_2_', 'Radiant_Position_3_', 'Radiant_Position_4_', 'Radiant_Position_5_', 
+                           'Dire_Position_1_', 'Dire_Position_2_', 'Dire_Position_3_', 'Dire_Position_4_', 'Dire_Position_5_']
+        query_columns = ['Radiant_Position_1id', 'Radiant_Position_2id', 'Radiant_Position_3id', 'Radiant_Position_4id', 'Radiant_Position_5id', 
+                         'Dire_Position_1id', 'Dire_Position_2id', 'Dire_Position_3id', 'Dire_Position_4id', 'Dire_Position_5id']
         
         # Get necessary information for predicting every match
         for idx, match in self.matches.iterrows():
@@ -678,16 +680,13 @@ class DataPreprocesser():
                 new_player = new_player.drop(['account_id', 'match_id'], axis=1)
                 new_player = new_player.add_prefix(prefix)
                 
-                print(f'The new player to insert is of shape: {new_player.shape}')
-
-                temp_players = pd.concat([temp_players, new_player], axis = 1)
+                if temp_players.empty:
+                    temp_players = new_player
+                else:
+                    temp_players = pd.concat([temp_players.reset_index(drop=True), new_player.reset_index(drop=True)], axis=1)
                 
-                print(f'Updated temp_players is now of shape: {temp_players.shape}')
-
             data = pd.concat([data, temp_players], axis=0)
-            
-            print(f'Shape of data is now: {data.shape}')
-            
+                        
         data.to_csv('test_data.csv')  # For verification; DELETE LATER
 
         return data
