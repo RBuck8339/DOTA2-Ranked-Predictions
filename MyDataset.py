@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 # Manages my dataset, can add functions as needed
 class MyDataset(Dataset):
     def __init__(self, features, labels, transforms):
-        self.features = features
+        self.features = self.handleNan(features)
         self.labels = labels
         self.transforms = transforms
         
@@ -18,4 +18,9 @@ class MyDataset(Dataset):
                 return self.transforms(self.features[idx]), self.lables[idx]
             
         return self.features[idx], self.labels[idx]
+    
+    
+    def handleNan(self, features):
+        features = features.copy()
+        return features.fillna(features.mean())
     
