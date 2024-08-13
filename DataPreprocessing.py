@@ -600,8 +600,6 @@ class DataPreprocesser():
     
     # Clean up the dataframes before providing as input to model
     def clean(self):
-        self.handleNan()  # before prepping the data
-        
         self.matches = self.matches.drop_duplicates(subset=['match_id'])
         self.matches.sort_values(by=['match_id'])  # For readability
         
@@ -647,6 +645,8 @@ class DataPreprocesser():
 
         self.to_dataframes()
         self.clean()  # Before starting, clean the data
+
+        self.players.to_csv('test.csv')
 
         print(f"Total number of matches available: {self.matches.shape[0]}")
 
@@ -707,10 +707,3 @@ class DataPreprocesser():
             print('FOUND A CASE THAT DOES NOT WORK IN ADJUST_ANON()')
         
         return curr_players
-    
-    
-    # To handle my missing data, I've decided to impute missing values with mean values
-    # I also did this with the anonymous players, so I want to keep these approaches similar
-    def handleNan(self):
-        self.players = self.players.fillna(self.players.mean())
-        self.player_stats_match = self.player_stats_match.fillna(self.player_stats_match.mean())
