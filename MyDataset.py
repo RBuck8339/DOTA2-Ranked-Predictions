@@ -19,8 +19,8 @@ class MyDataset(Dataset):
             
         return self.features[idx], self.labels[idx]
     
-    
+    '''
     def handleNan(self, features):
         features = features.copy()
-        return features.fillna(features.mean())
+        return features.fillna(features.mean())'''
     
