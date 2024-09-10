@@ -1,0 +1,39 @@
+
+
+footer {
+    text-align: center;
+    background-color: #3baee7;
+    color: black;
+}
+
+.socials {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 50px;
+}
+
+.contact h1 {
+    color: blueviolet; /*Temp Color*/
+    font-size: 50px;
+    margin-bottom: 10px;
+}
+
+.contact p {
+    color: darkorchid; /*Temp Color*/
+    margin-top: 10px;
+    margin-bottom: 20px;
+    font-size: 30px;
+}
+
+.social-item {
+    color: darkorchid; /*Temp Color*/
+    align-items: center;
+    gap: 25px;
+    font-size: 16px;
+}
+
+.social-item img {
+    width: 20px;
+    height: 20px;
+}
