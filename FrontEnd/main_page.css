@@ -1,6 +1,21 @@
-.model-test button {
+.banner banner-img{
+    width: 100%;
+    height: 80px;
+}
+
+.model {
     margin-left: auto;
     margin-right: auto;
+    text-align: center;
+}
+
+.data th {
+    background-color: dimgray
+}
+
+.data th, td {
+    border: 3px;
+    text-align: center;
 }
 
 footer {
