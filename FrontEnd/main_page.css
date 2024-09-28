@@ -60,18 +60,21 @@ body{
     margin-right: auto;
 }
 
+
 .stat-input {
     border: 0px;
     height: 20px;
     width: 140px;
 }
 
-.prediction {
-    margin-left: auto;
-    margin-right: auto;
+.data button {
+    background: #2c2c2c;
+    color: #ffd700;
+    display: block;
+    margin: 25px auto;
     text-align: center;
-    margin: 25px;
-
+    align-items: center;
+    cursor: pointer;
 }
 
 hr {

@@ -6,7 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>DOTA2 Match Predictor</title>
         <link rel="stylesheet" href="main_page.css">
-
+        
     </head>
 
     <!--ToDo: Figure out how to implement a drop down menu where I can show my model, thought process, and implementation for this project-->
@@ -27,287 +27,288 @@
             </section>
 
             <section class="data">
-                <table>
-                    <tr>
-                        <th></th>
-                        <th>Radiant Position 1</th>
-                        <th>Radiant Position 2</th>
-                        <th>Radiant Position 3</th>
-                        <th>Radiant Position 4</th>
-                        <th>Radiant Position 5</th>
-                        <th>Dire Position 1</th>
-                        <th>Dire Position 2</th>
-                        <th>Dire Position 3</th>
-                        <th>Dire Position 4</th>
-                        <th>Dire Position 5</th>
-                    </tr>
-                    <tr>
-                        <th>Player Rank</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Player Win Rate</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Average KDA Ratio</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Average Kills</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Average Deaths</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Average Assists</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Average Creep Score</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Average Denies</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Average Networth</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Average Gold Per Minute</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Average XP Per Minute</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Average Tower Damage</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Average Hero Damage</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Average Hero Healing</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Average Camps Stacked</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Average Match Performance</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Average Vision Score</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Recent Win Rate</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Recent Leave Ratio</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                    <tr>
-                        <th>Current Team W/L Rate</th>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                        <td><input type="text" class="stat-input"></td>
-                    </tr>
-                </table>
-
+                <form id="data-form" action="/submit-data" method="POST">
+                    <table id="data-table">
+                        <tr>
+                            <th></th>
+                            <th>Radiant Position 1</th>
+                            <th>Radiant Position 2</th>
+                            <th>Radiant Position 3</th>
+                            <th>Radiant Position 4</th>
+                            <th>Radiant Position 5</th>
+                            <th>Dire Position 1</th>
+                            <th>Dire Position 2</th>
+                            <th>Dire Position 3</th>
+                            <th>Dire Position 4</th>
+                            <th>Dire Position 5</th>
+                        </tr>
+                        <tr>
+                            <th>Player Rank</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Player Win Rate</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Average KDA Ratio</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Average Kills</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Average Deaths</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Average Assists</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Average Creep Score</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Average Denies</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Average Networth</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Average Gold Per Minute</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Average XP Per Minute</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Average Tower Damage</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Average Hero Damage</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Average Hero Healing</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Average Camps Stacked</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Average Match Performance</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Average Vision Score</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Recent Win Rate</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Recent Leave Ratio</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                        <tr>
+                            <th>Current Team W/L Rate</th>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                            <td><input type="text" class="stat-input"></td>
+                        </tr>
+                    </table>
+                    <button type="button" id="generateDataButton">Generate Random Data</button>
+                    <button type="submit" id="predictor">PREDICT</button>
+                </form>
             </section>
-
-
-            <section class="prediction">
-                <button type="button">PREDICT</button>
+            <section id="results">
+                <!--Put the results here using JS-->
             </section>
         </section>
         <hr>
@@ -323,6 +324,7 @@
             </div>
         </footer>
         
+        <script src="main_page.js"></script>
     </body>
 
 </html>
