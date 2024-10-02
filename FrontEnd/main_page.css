@@ -43,7 +43,7 @@ body{
     background-color: rgb(128, 128, 128);
 }
 
-.data th, td {
+.data th, .data td {
     width: 140px;
 }
 
@@ -51,7 +51,7 @@ body{
     width: 200px;
 }
 
-.data table, th, td {
+.data table, .data th, .data td {
     border: 1px solid;
     border-collapse: collapse;
     align-content: center;
@@ -76,6 +76,22 @@ body{
     align-items: center;
     cursor: pointer;
 }
+
+.results-table{
+    display: none; /* Start hidden */
+    width: 60%;
+    border-collapse: collapse;
+    margin: 0 auto; /* Horizontal centering */
+}
+.results-table th, .results-table td {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+.results-table th {
+    background-color: #f2f2f2;
+}
+
 
 hr {
     height: 3px;

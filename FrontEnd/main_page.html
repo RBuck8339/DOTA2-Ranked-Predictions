@@ -27,9 +27,10 @@
             </section>
 
             <section class="data">
-                <form id="data-form" action="/submit-data" method="POST">
-                    <table id="data-table">
-                        <tr>
+            
+                <table id="data-table">
+                    <thead>
+                        <tr></tr>
                             <th></th>
                             <th>Radiant Position 1</th>
                             <th>Radiant Position 2</th>
@@ -42,7 +43,9 @@
                             <th>Dire Position 4</th>
                             <th>Dire Position 5</th>
                         </tr>
-                        <tr>
+                    </thead>
+                    <tbody>
+                        <tr></tr>
                             <th>Player Rank</th>
                             <td><input type="text" class="stat-input"></td>
                             <td><input type="text" class="stat-input"></td>
@@ -302,13 +305,22 @@
                             <td><input type="text" class="stat-input"></td>
                             <td><input type="text" class="stat-input"></td>
                         </tr>
-                    </table>
-                    <button type="button" id="generateDataButton">Generate Random Data</button>
-                    <button type="submit" id="predictor">PREDICT</button>
-                </form>
+                    </tbody>
+                </table>
+                <button type="button" id="generateDataButton">Generate Random Data</button>
+                <button type="submit" id="predictor">PREDICT</button>
             </section>
+
             <section id="results">
-                <!--Put the results here using JS-->
+                <table id="results-table" class="results-table">
+                    <thead>
+                        <th>AUCROC</th>
+                        <th>AUCPR</th>
+                    </thead>
+                    <tbody>
+                        
+                    </tbody>
+                </table>
             </section>
         </section>
         <hr>
