@@ -2,14 +2,44 @@
 const genDataBtn = document.getElementById('generateDataButton')
 const predictBtn = document.getElementById('predictor')
 const results = document.getElementById('results-table')
-const dataTable = document.getElementById('data-table')
+const dataTable = document.querySelectorAll('#data-table tbody tr')  // All rows in data table
 
 
 // Adds the data to the table based on generated data
 function renderData(my_data) {
-    dataTable.innerHTML = `
-    
-    `
+    // Loop over each row
+    dataTable.forEach((row, row_idx) => {
+        const curr_cells = row.querySelectorAll('td') // Get the current row's cells
+
+        // Loop over the cells
+        curr_cells.forEach((cell, cell_idx) =>{
+            cell.textContent = '0' // Tmp value
+        })
+    })
+}
+
+
+function readTable(){
+    let storage = [[]] // Tmp
+    try{
+        // Loops over the data and stores it
+        dataTable.forEach((row, row_idx) => {
+            const curr_cells = row.querySelectorAll('td')
+
+            curr_cells.forEach((cell, cell_idx) =>{
+                val = td.textContent // Need to figure out how to make floating point nums instead of strings
+
+                // Error handlers
+                if(val < 0) throw "There should be no negative values in the data"
+                else if(val == null) throw "All data fields must be filled"
+
+                storage[row_idx][cell_idx] = val // Put into data table
+            })
+        })
+    }
+    catch(error){
+        console.log(error)
+    }
 }
 
 
@@ -40,8 +70,15 @@ genDataBtn.addEventListener('click', async () => {
 
 // When the user presses the "PREDICT" button, use the model to predict
 predictBtn.addEventListener('click', async () => {
+    data = readTable()
     try{
-        const prediction = await fetch('/predict')
+        const prediction = await fetch('/predict', {
+            method: 'POST',
+            headers: {
+                'Content-Type:': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
         renderResults(prediction)
     }
     catch (error){
