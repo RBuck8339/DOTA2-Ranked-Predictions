@@ -1,12 +1,17 @@
 import pickle
 import pandas as pd
 import numpy as np
+import sqlite3
 from flask import Flask, request, render_template, jsonify
+
 from DataPreprocessing import DataPreprocesser
 
 
 app = Flask(__name__)
-my_processor = DataPreprocesser()
+
+connection = sqlite3.connect('dota2.db', check_same_thread=False)
+cursor = connection.cursor()
+my_processor = DataPreprocesser(connection, cursor)
 model = pickle.load(open('model.pkl', 'rb'))  # Need to generate this
 
 
@@ -28,7 +33,7 @@ def home():
 
 
 # When the button is clicked, retrieve the data from the data table and obtain a match prediction
-@app.route('/get_data', methods=["POST"])
+@app.route('/predict', methods=["POST"])
 def runModel():
     data = request.json
     print(data)
@@ -41,13 +46,22 @@ def runModel():
 
 
 # Get random matches to populate the data table
-@app.route('/predict', methods=["GET"])
+@app.route('/get_data', methods=["GET"])
 def getData():
     my_processor.to_dataframes()
-    matches = my_processor.matches_processed()
-    random_match_num = np.random.choice(matches)
+    matches = my_processor.matches_processed
+    all_matches = [arr[0] for arr in matches]
+    random_match_num = np.random.choice(all_matches)
     curr_match = my_processor.players[my_processor.players['match_id'] == random_match_num]
-    match = curr_match.to_json(orient='records')  # Might need to update 'records' to 'columns'
+    curr_match = curr_match.drop(columns=['match_id', 'account_id'])
+        
+    # Transpose the dataframe and format it for ease of use in backend
+    curr_match = curr_match.T  
+    curr_match.columns = ['Radiant Position 1', 'Radiant Position 2', 'Radiant Position 3', 'Radiant Position 4', 'Radiant Position 5',
+                          'Dire Position 1', 'Dire Position 2', 'Dire Position 3', 'Dire Position 4', 'Dire Position 5']
+        
+    match = curr_match.to_json(orient='records')  # Might need to update 'records' to something easier to use
+    print('Returning')
     return jsonify(match)  
 
 

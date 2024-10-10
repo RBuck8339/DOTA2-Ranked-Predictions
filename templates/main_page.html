@@ -5,7 +5,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>DOTA2 Match Predictor</title>
-        <link rel="stylesheet" href="main_page.css">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main_page.css') }}">
         
     </head>
 
@@ -14,7 +14,7 @@
     <body>
         <!--I want to put a sort of banner at the top of here and have a menu at the top too-->
         <section class="banner">
-            <img src="images/dota2banner.jpg" alt="banner">
+            <img src="static/images/dota2banner.jpg" alt="banner">
             <div class="banner-text">DOTA2 MATCH PREDICTOR</div>
         </section>
 
@@ -330,13 +330,13 @@
             <h1><u>Contact Me</u></h1>
             <p>Want to ask questions? Give feedback? Just say hi?<br>Feel free to reach out and check out my socials below</p>
             <div class="socials">
-                <div class="social-item"> <a href="mailto:ronanwb2015@outlook.com?Subject=Hello Ronan!"> <img src='images/email.png' alt="email">Email</a> </div>
-                <div class="social-item"> <a href="https://www.linkedin.com/in/ronan-buck-79002b239/"> <img src='images/linkedin.png' alt="linkedin">LinkedIn</a> </div>
-                <div class="social-item"> <a href="https://www.github.com/RBuck8339"> <img src='images/github.png' alt="github">GitHub</a> </div>
+                <div class="social-item"> <a href="mailto:ronanwb2015@outlook.com?Subject=Hello Ronan!"> <img src='static/images/email.png' alt="email">Email</a> </div>
+                <div class="social-item"> <a href="https://www.linkedin.com/in/ronan-buck-79002b239/"> <img src='static/images/linkedin.png' alt="linkedin">LinkedIn</a> </div>
+                <div class="social-item"> <a href="https://www.github.com/RBuck8339"> <img src='static/images/github.png' alt="github">GitHub</a> </div>
             </div>
         </footer>
         
-        <script src="main_page.js"></script>
+        <script src="{{ url_for('static', filename='main_page.js') }}"></script>
     </body>
 
 </html>

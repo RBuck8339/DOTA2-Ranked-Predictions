@@ -646,8 +646,6 @@ class DataPreprocesser():
         self.to_dataframes()
         self.clean()  # Before starting, clean the data
 
-        self.players.to_csv('test.csv')
-
         print(f"Total number of matches available: {self.matches.shape[0]}")
 
         # Generate new dataframe

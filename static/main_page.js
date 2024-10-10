@@ -5,15 +5,17 @@ const results = document.getElementById('results-table')
 const dataTable = document.querySelectorAll('#data-table tbody tr')  // All rows in data table
 
 
+// Needs testing
 // Adds the data to the table based on generated data
 function renderData(my_data) {
     // Loop over each row
-    dataTable.forEach((row, row_idx) => {
+    my_data.forEach((dataRow, row_idx) => {
+        const row = dataTable[row_idx + 1]
         const curr_cells = row.querySelectorAll('td') // Get the current row's cells
 
         // Loop over the cells
         curr_cells.forEach((cell, cell_idx) =>{
-            cell.textContent = '0' // Tmp value
+            cell.textContent = dataRow[cell_idx] 
         })
     })
 }
@@ -59,11 +61,15 @@ function renderResults(my_results){
 // Grabs data from Python Flask connection to populate data table
 genDataBtn.addEventListener('click', async () => {
     try{
-        const data = await fetch('/get_data')
+        const response = await fetch('/get_data')
+        console.log('Received data')
+        const data = await response.json()
+        console.log('Received data')
         renderData(data)
     }
-    catch{
+    catch (error) {
         results.innerHTML = 'Error fetching data'
+        console.log('Error fetching data: ', error)
     }
 })
 
