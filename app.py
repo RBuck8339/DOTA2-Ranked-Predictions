@@ -15,7 +15,6 @@ my_processor = DataPreprocesser(connection, cursor)
 model = pickle.load(open('model.pkl', 'rb'))  # Need to generate this
 
 
-# Needs testing
 # Formats data for prediction based on what is in the JS table
 def format_data(data):
     row_data = []  # List to store the row data
@@ -60,8 +59,7 @@ def getData():
     curr_match.columns = ['Radiant Position 1', 'Radiant Position 2', 'Radiant Position 3', 'Radiant Position 4', 'Radiant Position 5',
                           'Dire Position 1', 'Dire Position 2', 'Dire Position 3', 'Dire Position 4', 'Dire Position 5']
         
-    match = curr_match.to_json(orient='records')  # Might need to update 'records' to something easier to use
-    print('Returning')
+    match = curr_match.to_json(orient='split')  # Might need to update 'records' to something easier to use
     return jsonify(match)  
 
 

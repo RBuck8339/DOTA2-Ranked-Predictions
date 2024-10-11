@@ -62,9 +62,9 @@ function renderResults(my_results){
 genDataBtn.addEventListener('click', async () => {
     try{
         const response = await fetch('/get_data')
-        console.log('Received data')
         const data = await response.json()
-        console.log('Received data')
+        console.log(JSON.stringify(data))
+        data = data['data']
         renderData(data)
     }
     catch (error) {
