@@ -2,7 +2,7 @@ import pickle
 import pandas as pd
 import numpy as np
 import sqlite3
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, Response, request, render_template, jsonify
 
 from DataPreprocessing import DataPreprocesser
 
@@ -53,16 +53,17 @@ def getData():
     random_match_num = np.random.choice(all_matches)
     curr_match = my_processor.players[my_processor.players['match_id'] == random_match_num]
     curr_match = curr_match.drop(columns=['match_id', 'account_id'])
-        
+
     # Transpose the dataframe and format it for ease of use in backend
     curr_match = curr_match.T  
     curr_match.columns = ['Radiant Position 1', 'Radiant Position 2', 'Radiant Position 3', 'Radiant Position 4', 'Radiant Position 5',
                           'Dire Position 1', 'Dire Position 2', 'Dire Position 3', 'Dire Position 4', 'Dire Position 5']
         
     match = curr_match.to_json(orient='split')  # Might need to update 'records' to something easier to use
-    return jsonify(match)  
+    return Response(response=match, status=200, mimetype="application/json")
 
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 

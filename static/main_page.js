@@ -2,22 +2,23 @@
 const genDataBtn = document.getElementById('generateDataButton')
 const predictBtn = document.getElementById('predictor')
 const results = document.getElementById('results-table')
-const dataTable = document.querySelectorAll('#data-table tbody tr')  // All rows in data table
+const dataTable = document.getElementById('data-table')  // All rows in data table
 
 
 // Needs testing
 // Adds the data to the table based on generated data
-function renderData(my_data) {
-    // Loop over each row
-    my_data.forEach((dataRow, row_idx) => {
-        const row = dataTable[row_idx + 1]
-        const curr_cells = row.querySelectorAll('td') // Get the current row's cells
+function renderData(data) {
+    const tbody = dataTable.querySelector('tbody'); // Get table body
 
-        // Loop over the cells
-        curr_cells.forEach((cell, cell_idx) =>{
-            cell.textContent = dataRow[cell_idx] 
-        })
-    })
+    // Loop over each row
+    Array.from(tbody.rows).forEach((dataRow, rowIdx) => {
+        const cells = dataRow.querySelectorAll('td'); // Select only <td> elements
+
+        // Loop over each cell in the row
+        cells.forEach((cell, cellIdx) => {
+            cell.textContent = data[rowIdx][cellIdx]; 
+        });
+    });
 }
 
 
@@ -62,9 +63,12 @@ function renderResults(my_results){
 genDataBtn.addEventListener('click', async () => {
     try{
         const response = await fetch('/get_data')
-        const data = await response.json()
-        console.log(JSON.stringify(data))
-        data = data['data']
+
+        // Parse the response
+        const text = await response.text(); 
+        const rawJson = JSON.parse(text); 
+
+        const data = rawJson.data // Get our data to display
         renderData(data)
     }
     catch (error) {
