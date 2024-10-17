@@ -59,7 +59,7 @@ def getData():
     curr_match.columns = ['Radiant Position 1', 'Radiant Position 2', 'Radiant Position 3', 'Radiant Position 4', 'Radiant Position 5',
                           'Dire Position 1', 'Dire Position 2', 'Dire Position 3', 'Dire Position 4', 'Dire Position 5']
         
-    match = curr_match.to_json(orient='split')  # Might need to update 'records' to something easier to use
+    match = curr_match.to_json(orient='split')  # Split is easiest to use for my purposes
     return Response(response=match, status=200, mimetype="application/json")
 
 

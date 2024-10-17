@@ -1,15 +1,15 @@
 // Buttons
 const genDataBtn = document.getElementById('generateDataButton')
 const predictBtn = document.getElementById('predictor')
+
+// Frontend elements
 const results = document.getElementById('results-table')
 const dataTable = document.getElementById('data-table')  // All rows in data table
+const tbody = dataTable.querySelector('tbody'); // Get table body
 
 
-// Needs testing
 // Adds the data to the table based on generated data
 function renderData(data) {
-    const tbody = dataTable.querySelector('tbody'); // Get table body
-
     // Loop over each row
     Array.from(tbody.rows).forEach((dataRow, rowIdx) => {
         const cells = dataRow.querySelectorAll('td'); // Select only <td> elements
@@ -21,28 +21,28 @@ function renderData(data) {
     });
 }
 
-
+// Needs testing
 function readTable(){
-    let storage = [[]] // Tmp
-    try{
-        // Loops over the data and stores it
-        dataTable.forEach((row, row_idx) => {
-            const curr_cells = row.querySelectorAll('td')
+    const storage = Array.from({ length: 20 }, () => Array(10));
+    
+    Array.from(tbody.rows).forEach((dataRow, rowIdx) => {
+        const cells = dataRow.querySelectorAll('td'); // Select only <td> elements
 
-            curr_cells.forEach((cell, cell_idx) =>{
-                val = td.textContent // Need to figure out how to make floating point nums instead of strings
+        // Loop over each cell in the row
+        cells.forEach((cell, cellIdx) => {
 
-                // Error handlers
-                if(val < 0) throw "There should be no negative values in the data"
-                else if(val == null) throw "All data fields must be filled"
+            val = cell.textContent.trim() 
+            val = parseFloat(val)
 
-                storage[row_idx][cell_idx] = val // Put into data table
-            })
-        })
-    }
-    catch(error){
-        console.log(error)
-    }
+            // If there is a value here, store it
+            if (!isNaN(val)) {
+                storage[rowIdx][cellIdx] = val; 
+            } 
+            else {
+                throw new Error('Missing value at row ${rowIdx + 1}, cell ${cellIdx + 1}')
+            }
+        });
+    }); 
 }
 
 
