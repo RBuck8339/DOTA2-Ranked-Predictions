@@ -12,7 +12,7 @@ app = Flask(__name__)
 connection = sqlite3.connect('dota2.db', check_same_thread=False)
 cursor = connection.cursor()
 my_processor = DataPreprocesser(connection, cursor)
-model = pickle.load(open('model.pkl', 'rb'))  # Need to generate this
+model = pickle.load(open('model/model.pkl', 'rb'))  # Need to generate this
 
 
 # Formats data for prediction based on what is in the JS table
@@ -34,9 +34,9 @@ def home():
 # When the button is clicked, retrieve the data from the data table and obtain a match prediction
 @app.route('/predict', methods=["POST"])
 def runModel():
-    data = request.json
-    print(data)
+    data = request.get_json()
     data = pd.DataFrame(data)
+    print(data)  # Tmp
     data, res_match = format_data(data)  # Need to modify to actually format the correct data
     res = model.predict(data)
     results = {}
