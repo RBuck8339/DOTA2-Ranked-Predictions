@@ -43,6 +43,7 @@ function readTable(){
             }
         });
     }); 
+    return storage
 }
 
 
@@ -85,11 +86,12 @@ predictBtn.addEventListener('click', async () => {
         const prediction = await fetch('/predict', {
             method: 'POST',
             headers: {
-                'Content-Type:': 'application/json',
+                'Content-Type': 'application/json', 
             },
             body: JSON.stringify(data)
         })
-        renderResults(prediction)
+        const predictionJson = await prediction.json()
+        renderResults(predictionJson)
     }
     catch (error){
         results.innerHTML = 'Failed to generate match prediction'

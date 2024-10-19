@@ -2,6 +2,7 @@ import pickle
 import pandas as pd
 import numpy as np
 import sqlite3
+import json
 from flask import Flask, Response, request, render_template, jsonify
 
 from DataPreprocessing import DataPreprocesser
@@ -12,7 +13,7 @@ app = Flask(__name__)
 connection = sqlite3.connect('dota2.db', check_same_thread=False)
 cursor = connection.cursor()
 my_processor = DataPreprocesser(connection, cursor)
-model = pickle.load(open('model.pkl', 'rb'))  # Need to generate this
+model = pickle.load(open('model/model.pkl', 'rb'))  # Need to generate this
 
 
 # Formats data for prediction based on what is in the JS table
@@ -35,13 +36,20 @@ def home():
 @app.route('/predict', methods=["POST"])
 def runModel():
     data = request.json
-    print(data)
-    data = pd.DataFrame(data)
-    data, res_match = format_data(data)  # Need to modify to actually format the correct data
-    res = model.predict(data)
-    results = {}
-    # Add code here to display scores, confidence, etc.
-    return jsonify(results)
+    features = [element for group in zip(*data) for element in group]
+    features = np.array(features)
+    features = features.reshape(1, 200)
+   
+    stats_file = 'model/stats.json'
+    with open(stats_file, 'r') as file:
+        stats = json.load(file)
+    
+    # Model results
+    res = model.predict(features)
+    stats['prediction'] = res
+    stats['confidence'] = (model.predict_proba(features))[:, res]
+    
+    return jsonify(stats)
 
 
 # Get random matches to populate the data table
