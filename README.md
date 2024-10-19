@@ -1,6 +1,7 @@
 # How To Use It
-Git clone this project, open up FrontEnd/main_page.html and click "PREDICT"
-More detailed instructions coming later
+Git clone this project, run "app.py" and open it using local host in your browser.
+Then, either enter your own data, or click "Generate Data" and "Predict" to see your results.
+
 
 # Project Goal
 Create my own dataset using REST API and GraphQL calls that I can use in machine learning tasks.
@@ -14,12 +15,12 @@ Handling missing data, preprocessing, and feature engineering
 
 Storing data in an SQLite database for convenience and lightweight use
 
-In the future, I plan to implement
+Feel free to use this dataset, and my provided methods in DataPreprocessing.py to use for your own purposes.
 
 # The Model
 Testing different types of machine learning models and neural networks for the predictor. For now, using a random forest model.
+This project will also serve as a way for me to get comfortable with different models and tasks. I created a large dataset for the purpose of being able to fit regression, binary classification, and multiclass classification tasks. However, much of it will not be implemented in the website, and will exist purely in the "prediction.ipynb" jupyter notebook.
 
 # The Website
-Given that I have never designed a website before, I wanted to take my time and learn HTML, CSS, and REACT. 
+Given that I have never designed a website before, I wanted to take my time and learn HTML, CSS, and JS. 
 My primary goal in designing a website is to have a functional and responsive website, but I also want it to look professional and engaging, while fitting the darker color pallete of DOTA 2.
-Currently, the backend is not implemented, but will be by the end of September.

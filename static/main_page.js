@@ -4,7 +4,7 @@ const predictBtn = document.getElementById('predictor')
 
 // Frontend elements
 const results = document.getElementById('results-table')
-const dataTable = document.getElementById('data-table')  // All rows in data table
+const dataTable = document.getElementById('data-table') // All rows in data table
 const tbody = dataTable.querySelector('tbody'); // Get table body
 
 
@@ -16,29 +16,28 @@ function renderData(data) {
 
         // Loop over each cell in the row
         cells.forEach((cell, cellIdx) => {
-            cell.textContent = data[rowIdx][cellIdx]; 
+            cell.textContent = data[rowIdx][cellIdx];
         });
     });
 }
 
-// Needs testing
-function readTable(){
+// Reads in data from the table to pass to the ML model
+function readTable() {
     const storage = Array.from({ length: 20 }, () => Array(10));
-    
+
     Array.from(tbody.rows).forEach((dataRow, rowIdx) => {
         const cells = dataRow.querySelectorAll('td'); // Select only <td> elements
 
         // Loop over each cell in the row
         cells.forEach((cell, cellIdx) => {
 
-            val = cell.textContent.trim() 
+            val = cell.textContent.trim()
             val = parseFloat(val)
 
             // If there is a value here, store it
             if (!isNaN(val)) {
-                storage[rowIdx][cellIdx] = val; 
-            } 
-            else {
+                storage[rowIdx][cellIdx] = val;
+            } else {
                 throw new Error('Missing value at row ${rowIdx + 1}, cell ${cellIdx + 1}')
             }
         });
@@ -48,7 +47,7 @@ function readTable(){
 
 
 // Displays the ML model results on the screen for the user
-function renderResults(my_results){
+function renderResults(my_results) {
 
     // Updates the results table based on the results received from the predict button
     results.innerHTML = `
@@ -61,24 +60,24 @@ function renderResults(my_results){
 
 
 // Grabs data from Python Flask connection to populate data table
-genDataBtn.addEventListener('click', async () => {
-    try{
+genDataBtn.addEventListener('click', async() => {
+    try {
         const response = await fetch('/get_data')
 
         // Parse the response
-        const text = await response.text(); 
-        const rawJson = JSON.parse(text); 
+        const text = await response.text();
+        const rawJson = JSON.parse(text);
 
         const data = rawJson.data // Get our data to display
         renderData(data)
-    }
-    catch (error) {
+    } catch (error) {
         results.innerHTML = 'Error fetching data'
         console.log('Error fetching data: ', error)
     }
 })
 
 
+// Needs testing
 // When the user presses the "PREDICT" button, use the model to predict
 predictBtn.addEventListener('click', async () => {
     data = readTable()

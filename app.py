@@ -35,6 +35,7 @@ def home():
 # When the button is clicked, retrieve the data from the data table and obtain a match prediction
 @app.route('/predict', methods=["POST"])
 def runModel():
+<<<<<<< HEAD
     data = request.json
     features = [element for group in zip(*data) for element in group]
     features = np.array(features)
@@ -50,6 +51,16 @@ def runModel():
     stats['confidence'] = (model.predict_proba(features))[:, res]
     
     return jsonify(stats)
+=======
+    data = request.get_json()
+    data = pd.DataFrame(data)
+    print(data)  # Tmp
+    data, res_match = format_data(data)  # Need to modify to actually format the correct data
+    res = model.predict(data)
+    results = {}
+    # Add code here to display scores, confidence, etc.
+    return jsonify(results)
+>>>>>>> d276afa76488b1007cba04ad619d34c385c8ca69
 
 
 # Get random matches to populate the data table
