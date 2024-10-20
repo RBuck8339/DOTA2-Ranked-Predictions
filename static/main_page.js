@@ -48,13 +48,26 @@ function readTable() {
 
 // Displays the ML model results on the screen for the user
 function renderResults(my_results) {
+    // Change prediction result based on if radiant wins from binary 1/0 to True/False for readability
+    if(my_results['prediction'] === 1) my_results['prediction'] = 'True'
+    else my_results['prediction'] = 'False' 
 
     // Updates the results table based on the results received from the predict button
     results.innerHTML = `
         <table id="display-results">
-        <th></th>
+            <tr> 
+                <th>AUCROC</th>
+                <th>Confidence Score</th>
+                <th>Radiant Wins</th>
+            </tr>
+            <tr>
+                <td>${my_results['AUCROC']}</td>
+                <td>${my_results['confidence']}%</td>
+                <td>${my_results['prediction']}</td>
+            </tr>
         </table>
     `
+    
     results.style.display = 'table'
 }
 

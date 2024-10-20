@@ -39,15 +39,16 @@ def runModel():
     features = [element for group in zip(*data) for element in group]
     features = np.array(features)
     features = features.reshape(1, 200)
-   
+    
+    # get most recent model stats
     stats_file = 'model/stats.json'
     with open(stats_file, 'r') as file:
         stats = json.load(file)
     
     # Model results
-    res = model.predict(features)
+    res = int((model.predict(features))[0])  # Prediction result with Radiant Wins being positive label
     stats['prediction'] = res
-    stats['confidence'] = (model.predict_proba(features))[:, res]
+    stats['confidence'] = ((model.predict_proba(features))[:, res])[0]
     
     return jsonify(stats)
 
