@@ -67,7 +67,7 @@ function renderResults(my_results) {
             </tr>
         </table>
     `
-    
+
     results.style.display = 'table'
 }
 
@@ -90,7 +90,6 @@ genDataBtn.addEventListener('click', async() => {
 })
 
 
-// Needs testing
 // When the user presses the "PREDICT" button, use the model to predict
 predictBtn.addEventListener('click', async () => {
     data = readTable()
